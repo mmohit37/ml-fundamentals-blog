@@ -1,1 +1,3 @@
-theme: minima
+title: "ML Fundamentals Blog"
+description: "Notes and experiments"
+theme: jekyll-theme-cayman
