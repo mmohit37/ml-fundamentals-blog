@@ -3,6 +3,7 @@ description: Notes and experiments on ML fundamentals
 theme: minima
 
 show_excerpts: true
+future: true
 
 url: "https://mmohit37.github.io"
 baseurl: "/ml-fundamentals-blog"
