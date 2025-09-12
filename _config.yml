@@ -1,3 +1,8 @@
-title: "ML Fundamentals Blog"
-description: "Notes and experiments"
-theme: jekyll-theme-cayman
+title: ML Fundamentals – Blog
+description: Notes and experiments on ML fundamentals
+theme: minima
+
+show_excerpts: true
+
+url: "https://mmohit37.github.io"
+baseurl: "/ml-fundamentals-blog"
