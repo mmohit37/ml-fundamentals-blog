@@ -53,7 +53,7 @@ Feature set I used:
 
 I plotted the class counts:
 
-![Survivor counts]({{ "assets/images/titanic/survivor_counts.png" | relative_url }})
+![Survivor counts]({{ '/assets/images/titanic/survivor_counts.png' | relative_url }})
 
 **Why:** before choosing a metric or threshold, I want to know the baseline. It’s not wildly imbalanced, so I can use accuracy/F1/AUC without special tricks like heavy class weighting.
 
