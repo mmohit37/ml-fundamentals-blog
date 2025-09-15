@@ -53,9 +53,9 @@ Feature set I used:
 
 I plotted the class counts:
 
-![Survivor counts]({{ '/assets/images/titanic/survivor_counts.png' | relative_url }})
+![Survivor counts]({{ '/assets/images/titanic/survivor_counts_v2.png' | relative_url }})
 
-**Why:** before choosing a metric or threshold, I want to know the baseline. It’s not wildly imbalanced, so I can use accuracy/F1/AUC without special tricks like heavy class weighting.
+**Why:** Before we judge any model, we need to know how many people survived vs. didn’t survive in the training data. If one group is much bigger than the other, a lazy model can look “good” just by always guessing the bigger group. Checking the bar chart tells us how skewed things are and which scores make sense. In Titanic, non-survivors are more than survivors, but it’s not crazy unbalanced, so accuracy/AUC/F1 are still meaningful without fancy tricks. If the gap were huge, we’d consider things like class weights or different evaluation metrics.
 
 ---
 
