@@ -3,7 +3,7 @@ layout: post
 title: "Titanic: a quick ML walkthrough (EDA → CART → XGBoost)"
 date: 2025-09-15
 categories: kaggle titanic
-tags: tutorial sklearn xgboost dtreeviz
+tags: tutorial sklearn randomforest xgboost dtreeviz
 ---
 
 I used the classic Kaggle **Titanic** dataset to warm up on feature engineering and tree-based models.  
@@ -22,16 +22,16 @@ This post walks through what I did **and why I did it**, so people can replicate
 
 ## 2) Fast features that carry meaning
 
-I built a few simple features:
+I built a few simple features from the existing variables:
 
 - `fam_size = SibSp + Parch + 1`  
-  **Why:** family presence matters socially (someone to help you get to lifeboats), and this is an easy way to encode it. It also makes sense to group siblings and spouses (SibSp) and parents and children (Parch) instead of looking at them individually.
+  **Why:** Family presence matters socially (someone to help you get to lifeboats), and this is an easy way to encode it. It also makes sense to group siblings and spouses (SibSp) and parents and children (Parch) instead of looking at them individually.
 
 - `alone = (fam_size == 1)`  
-  **Why:** lots of Kaggle notebooks show that being alone correlates with survival odds. The model can learn it from `fam_size`, but an explicit boolean value that classifies someone as alone (1) or not (0).
+  **Why:** Lots of Kaggle notebooks show that being alone correlates with survival odds. The model can learn it from `fam_size`, but an explicit boolean value that classifies someone as alone (1) or not (0).
 
 - **Title** from `Name` (Mr, Mrs, Miss, Master, Rare)  
-  **Why:** titles represent **age**, **gender**, and sometimes **status**. They’re surprisingly strong signals and more stable than raw name text. It also makes sense that women and children would be prioritized for safety first, so creating this variable can help incorporate that into the model.
+  **Why:** Titles represent **age**, **gender**, and sometimes **status**. They’re surprisingly strong signals and more stable than raw name text. It also makes sense that women and children would be prioritized for safety first, so creating this variable can help incorporate that into the model.
 
 - **Grouped imputations**  
   - `Age`: filled by **median within title**  
@@ -61,12 +61,251 @@ I plotted the class counts:
 
 ## 4) Train/valid/test split
 
+**Why:** We keep a final **test** set untouched for an honest evaluation, and carve a **validation** set out of the training data to tune/stop models without peeking at the test set.
+
 ```python
-from sklearn.model_selection import train_test_split
+# One‑hot encode categoricals (drop_first avoids a redundant column)
+df = pd.get_dummies(df, columns=["Sex", "Embarked", "title"], drop_first=True)
 
-X = df.drop("Survived", axis=1)
-y = df["Survived"]
 
+# Define X/y explicitly (keeps things readable + leak‑proof)
+X = df.drop(columns=["Survived"]) # features — includes one‑hot columns
+y = df["Survived"].astype(int) # target
+
+
+# Hold‑out test set (20%), stratified (preserving proportions so dataframes don't get mismatched) 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+ X, y, test_size=0.20, random_state=42, stratify=y
 )
+
+# Then carve validation set (20% of train → 64/16/20)
+X_tr, X_val, y_tr, y_val = train_test_split(
+ X_train, y_train, test_size=0.20, random_state=42, stratify=y_train
+)
+
+
+# Drop any duplicate columns (can happen after merges/dummies)
+def _drop_dupes(df_: pd.DataFrame) -> pd.DataFrame:
+ return df_.loc[:, ~df_.columns.duplicated()].copy()
+
+
+X_tr = _drop_dupes(X_tr)
+X_val = _drop_dupes(X_val)
+X_test= _drop_dupes(X_test)
+
+
+# 4) Freeze the exact feature list/order for every downstream step
+COLS = list(X_tr.columns)
+X_tr = X_tr[COLS].copy()
+X_val = X_val[COLS].copy()
+X_test = X_test[COLS].copy()
+
+
+print("train:", X_tr.shape, " valid:", X_val.shape, " test:", X_test.shape) 
+#output: train: (569, 15)  valid: (143, 15)  test: (179, 15)
+print("pos rate -> train:", float(y_tr.mean()), " valid:", float(y_val.mean()), " test:", float(y_test.mean())) 
+#output: pos rate -> train: 0.38312829525483305  valid: 0.38461538461538464  test: 0.3854748603351955
+```
+### Why these little details matter
+
+- **One-hot with `drop_first=True`.** Columns like `Sex` or `Embarked` are words. Models need numbers. One-hot makes a 0/1 column for each choice (e.g., `Sex_male`). Dropping the first level avoids sending the same information twice.
+- **Freeze `COLS`.** After splitting the data, I lock the final feature list and its order so every model and plot uses the exact same columns. This prevents the annoying “X has N features, model expects M” error.
+- **Drop duplicate columns.** Encoding/merges can accidentally create duplicate columns. I keep the first and drop the rest so the model doesn’t double-count anything.
+- **“pos rate”.** (Probability of Success) This is the share of rows with `Survived == 1`. Because I use `stratify=...`, train/valid/test have similar pos rates. If one split was way off, accuracy comparisons wouldn’t be fair.
+
+
+## 5) Baseline model: Random Forest
+
+**Why:** Random Forests are strong, quick baselines for tabular data. They handle mixed features (after one-hot encoding), need little preprocessing, and give feature importances.
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+
+rf = RandomForestClassifier(
+    n_estimators=200,
+    max_depth=9,
+    max_features='sqrt',
+    min_samples_split=2,
+    min_samples_leaf=1,
+    random_state=42,
+    oob_score=True,
+    n_jobs=-1,
+)
+rf.fit(X_tr, y_tr)
+
+# Validation metrics
+rf_val_pred  = rf.predict(X_val)
+rf_val_proba = rf.predict_proba(X_val)[:, 1]
+rf_val = dict(
+    model="RandomForest",
+    split="valid",
+    acc=accuracy_score(y_val, rf_val_pred),
+    f1=f1_score(y_val, rf_val_pred),
+    auc=roc_auc_score(y_val, rf_val_proba),
+)
+
+# Test metrics
+rf_test_pred  = rf.predict(X_test)
+rf_test_proba = rf.predict_proba(X_test)[:, 1]
+rf_test = dict(
+    model="RandomForest",
+    split="test",
+    acc=accuracy_score(y_test, rf_test_pred),
+    f1=f1_score(y_test, rf_test_pred),
+    auc=roc_auc_score(y_test, rf_test_proba),
+)
+
+print("RF oob_score (train):", getattr(rf, "oob_score_", None))
+print("RF valid:", rf_val)   # e.g. {'acc': 0.825, 'f1': 0.786, 'auc': 0.868}
+print("RF test :", rf_test)  # e.g. {'acc': 0.811, 'f1': 0.738, 'auc': 0.845}
+```
+
+### Interpreting the Random Forest results
+
+**Why AUC matters:**  
+Accuracy depends on a single cutoff (usually 0.5), but **AUC** measures how well the model **ranks** survivors above non-survivors across all cutoffs. An AUC of **0.85** means that if you pick one random survivor and one random non-survivor, the model gives the survivor a higher score about **85%** of the time. That’s strong.
+
+**What do these numbers mean?**  
+- **Accuracy ~0.81** → about **81 out of 100** passengers are classified correctly on unseen data. A simple baseline (“always predict didn’t survive”) is only ~**62%**, so this is clearly better.
+- **F1 ~0.74** → balanced view of finding survivors without calling too many false alarms.
+
+**Real-world tie-in:** The top signals match history: **Sex**, **Pclass**, **Age/Fare**, and **Title**. “**Women and children first**” and better lifeboat access for higher classes show up in the data, and the model learns those patterns.
+
+**Is the model overfitting?**  
+There’s a small drop from validation (≈0.825 acc) to test (≈0.811 acc). That’s normal and suggests the model generalizes pretty well, with only mild overfit. If we want to push performance, we can tune hyperparameters, adjust the decision threshold* (to boost F1), or use cross-validation to pick better settings more reliably.
+
+- **Threshold:** models give a score (0→1). We choose a cutoff (like **0.5**) to turn the score into a Yes/No. Moving this cutoff changes accuracy.
+
+## 6) XGBoost + Early stopping
+
+**Why:** Boosted trees typically beat single trees/forests on tabular data. Early stopping halts training when the validation score stops improving and it also helps avoid overfitting.
+
+```python
+import xgboost as xgb
+import numpy as np
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+
+feat_names = list(X_tr.columns)
+
+dtr = xgb.DMatrix(X_tr.to_numpy(dtype=float),   label=y_tr.to_numpy(),   feature_names=feat_names)
+dval= xgb.DMatrix(X_val.to_numpy(dtype=float),  label=y_val.to_numpy(),  feature_names=feat_names)
+dte = xgb.DMatrix(X_test.to_numpy(dtype=float), label=y_test.to_numpy(), feature_names=feat_names)
+
+pos = int(y_tr.sum()); neg = len(y_tr) - pos
+params = {
+    "objective": "binary:logistic",
+    "eval_metric": "auc",
+    "eta": 0.05,
+    "max_depth": 4,
+    "subsample": 0.9,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 1,
+    "lambda": 1.0,
+    "alpha": 0.0,
+    "scale_pos_weight": neg / max(pos, 1),
+    "tree_method": "hist",
+    "seed": 42,
+}
+
+bst = xgb.train(
+    params=params,
+    dtrain=dtr,
+    num_boost_round=2000,
+    evals=[(dtr, "train"), (dval, "valid")],
+    early_stopping_rounds=50,
+    verbose_eval=False,
+)
+
+# Predictions at the best iteration
+xgb_val_proba  = bst.predict(dval, iteration_range=(0, bst.best_iteration + 1))
+xgb_test_proba = bst.predict(dte,  iteration_range=(0, bst.best_iteration + 1))
+xgb_val_pred   = (xgb_val_proba  >= 0.5).astype(int)
+xgb_test_pred  = (xgb_test_proba >= 0.5).astype(int)
+
+xgb_val = dict(
+    model="XGBoost",
+    split="valid",
+    acc=accuracy_score(y_val, xgb_val_pred),
+    f1=f1_score(y_val, xgb_val_pred),
+    auc=roc_auc_score(y_val, xgb_val_proba),
+)
+xgb_test = dict(
+    model="XGBoost",
+    split="test",
+    acc=accuracy_score(y_test, xgb_test_pred),
+    f1=f1_score(y_test, xgb_test_pred),
+    auc=roc_auc_score(y_test, xgb_test_proba),
+)
+
+print("XGB best_iteration:", bst.best_iteration, "best_valid_auc:", bst.best_score)  #output: ("XGB best_iteration: 0", best_valid_auc: 0.9138576779026217
+print("XGB valid:", xgb_val) #output: {'acc': 0.8391608391608392, 'auc': 0.8986683312526009, 'f1': 0.7850467289719626}
+print("XGB test :", xgb_test) #output: {'acc': 0.8044692737430168, 'auc': 0.8978764478764477, 'f1': 0.7586206896551724}
+```
+**Fresh run (corrected build):**
+- **best_iteration ≈ 71** (picked by validation AUC)  
+- **Validation:** ACC ≈ **0.825**, AUC ≈ **0.810**, F1 ≈ **0.775**  
+- **Test:** ACC ≈ **0.827**, AUC ≈ **0.851**, F1 ≈ **0.786**
+
+**Why this matters:**
+- XGBoost slightly **edges** Random Forest on **test accuracy** and **AUC**. Boosting focuses on tough cases and usually squeezes out a bit more signal on tabular data.
+- Early stopping keeps things honest: I stop when **validation AUC** stops improving and then predict using the **best iteration**. The test set stays untouched until the very end.
+
+**Real-world tie-in:** Same story as the RF (Sex, Pclass, Title, Age/Fare) but a bit better at ranking the close calls, which nudges the AUC a bit higher.
+
+## 7) Results + Takeaways
+
+### A previous mistake
+
+I first trained an **XGBoost** model and saw an accuracy close to **0.9**. That felt **way** too high for this dataset, especially since it was my first time building something like this. So before posting anything, I stopped and double-checked. I looked up common pitfalls (like **data leakage**, tweaking the **classification threshold** on the same data I was measuring, or accidentally **peeking at the test set**) and asked a couple of colleagues with more ML experience. The feedback was clear: numbers that high on Titanic with these features are a **red flag** unless the validation is airtight.
+
+Since being safe and trustworthy is better to me than being flashy, I decided to start from scratch (the models you saw above).
+
+**What I fixed:**
+- I used a clean **64/16/20** split (train/valid/test), **stratified** to reduce mismatching.
+- I **froze the feature columns** after one-hot encoding, so the matrices stay consistent.
+- For XGBoost I used **early stopping on the validation set** and predicted with the **best iteration** it found.
+- I report accuracy at a fixed **0.5** threshold. If I change the threshold, I **tune it on validation** and apply it only **once** to test.
+- I reran everything. The new numbers are **lower**, which was a bit sad, but they’re the kind you can **trust**, so I still felt satisfied with the results.
+
+> TL;DR: I didn’t publish the first result because it looked too good to be true. I rebuilt the pipeline carefully, and now the results are honest and reproducible.
+
+### Metrics table
+
+| model        | split      | threshold | acc    | f1     | auc    |
+|--------------|------------|-----------|--------|--------|--------|
+| RandomForest | valid      | 0.50      | 0.8252 | 0.7664 | 0.8679 |
+| RandomForest | test       | 0.50      | 0.8101 | 0.7384 | 0.8451 |
+| RandomForest | test@tuned | 0.37      | 0.8156 | 0.7724 | 0.8451 |
+| XGBoost      | valid      | 0.50      | 0.8252 | 0.7748 | 0.8099 |
+| XGBoost      | test       | 0.50      | 0.8268 | 0.7862 | 0.8507 |
+| XGBoost      | test@tuned | 0.74      | 0.7821 | 0.6549 | 0.8507 |
+
+**What these numbers mean (no jargon):**
+- **Accuracy (“acc”)** — out of 100 passengers, how many the model gets right.  
+  Example: RF at **0.81** ≈ **81 out of 100** correct on unseen data.
+- **AUC (“auc”)** — how well the model **orders** people from “less likely” to “more likely” to survive.  
+  AUC **~0.85** means if you pick one survivor and one non-survivor at random, the model gives the survivor a higher score about **85%** of the time.
+- **F1** — a balance between “catching survivors” and false alarms  
+  Higher F1 means we’re finding more true survivors without too many false alarms.
+
+**Reading the table:**
+- Both models land in the **mid–high 0.8 AUC** range → they rank people reasonably well.
+- At the **standard 0.5 cutoff**, **XGBoost** is a touch better than **Random Forest** on **test accuracy** and **AUC**.
+- **test@tuned** shows what happens if we move the cutoff to one chosen on validation:  
+  RF’s tuned threshold raises F1 (we catch more true survivors).  
+  XGB’s tuned threshold got stricter (higher cutoff), so the accuracy drops, which is an honest trade-off, not much of an error.
+
+### Plots
+
+- ROC (validation): ![ROC valid]({{ "/assets/images/titanic/titanic_roc_valid.png" | relative_url }})
+- ROC (test): ![ROC test]({{ "/assets/images/titanic/titanic_roc_test.png" | relative_url }})
+- Confusion (test, RF @ tuned): ![CM RF]({{ "/assets/images/titanic/titanic_cm_test_rf.png" | relative_url }})
+- Confusion (test, XGB @ tuned): ![CM XGB]({{ "/assets/images/titanic/titanic_cm_test_xgb.png" | relative_url }})
+- Feature importance (RF): ![FI RF]({{ "/assets/images/titanic/titanic_importance_rf.png" | relative_url }})
+- Feature importance (XGB): ![FI XGB]({{ "/assets/images/titanic/titanic_importance_xgb.png" | relative_url }})
+
+### What’s next
+
+- **NASDAQ FCF project:** I’ll apply this clean setup to my NASDAQ fundamentals data set (free-cash-flow) study and write up the results.  
+- **Bonus CART explainer:** I plan to add one small decision tree (CART, depth=3) on the NASDAQ dataset as a “how the model thinks” figure. It’s not meant to beat RF/XGB — just to explain the rules in plain English. I feel like it could be a skill worth learning for future ML practice. 
