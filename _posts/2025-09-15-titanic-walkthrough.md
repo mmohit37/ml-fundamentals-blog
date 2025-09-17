@@ -1,20 +1,51 @@
 ---
 layout: post
-title: "Titanic: a quick ML walkthrough (EDA → CART → XGBoost)"
+title: "Titanic: a quick ML walkthrough (EDA → RandomForest → XGBoost)"
 date: 2025-09-15
 categories: kaggle titanic
 tags: tutorial sklearn randomforest xgboost dtreeviz
 ---
 
+<style>
+/* Dark “Nord-ish” palette for code blocks (per-post) */
+pre.highlight, .highlighter-rouge pre {
+  background: #0b1221; 
+  color: #e6edf3;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  overflow: auto;
+}
+.highlighter-rouge .na, .highlight .na { color:#7ee787; }
+.highlighter-rouge .nb, .highlight .nb { color:#79c0ff; } 
+.highlighter-rouge .kd, .highlight .kd,
+.highlighter-rouge .k,  .highlight .k  { color:#ff7b72; }
+.highlighter-rouge .s,  .highlight .s  { color:#a5d6ff; }
+.highlighter-rouge .mi, .highlight .mi { color:#ffa657; }
+.highlighter-rouge .c,  .highlight .c  { color:#8b949e; font-style:italic; }
+
+details.code-alt pre {
+  background: #151a2d;
+  color: #e6edf3;
+}
+details > summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  margin: .5rem 0;
+}
+details > summary::-webkit-details-marker { display: none; }
+</style>
+
 I used the classic Kaggle **Titanic** dataset to warm up on feature engineering and tree-based models.  
 This post walks through what I did and why I did it, so people can replicate the experiment and understand my thought process.
 
+> **Heads-up:** If you are new to ML or unfamiliar with certain vocabulary, here’s a short **glossary** at the end for any jargon — jump to [Appendix: quick vocab](#vocab).
 ---
 
 ## 1) Goal & data
 
 **Goal:** predict whether a passenger survived the Titanic disaster.  
-**Data:** `data/raw/titanic/train.csv` (Kaggle’s Titanic competition).
+**Data:** the classic Kaggle competition — [Titanic: Machine Learning from Disaster](https://www.kaggle.com/c/titanic)
 
 **Why:** it’s a small tabular dataset that’s perfect for practicing the full exploratory data analysis (EDA) → features → modeling → interpretation without getting buried in scale or noise.
 
@@ -22,13 +53,13 @@ This post walks through what I did and why I did it, so people can replicate the
 
 ## 2) Fast features that carry meaning
 
-I built a few simple features from the existing variables:
+I built a few simple features from the existing variables. Since predicting an outcome isn't as simple as putting everything into the algorithm and hoping for a good output, I chose to help the model by creating variables that tell a better story:
 
 - `fam_size = SibSp + Parch + 1`  
   **Why:** Family presence matters socially (someone to help you get to lifeboats), and this is an easy way to encode it. It also makes sense to group siblings and spouses (SibSp) and parents and children (Parch) instead of looking at them individually.
 
 - `alone = (fam_size == 1)`  
-  **Why:** Lots of Kaggle notebooks show that being alone correlates with survival odds. The model can learn it from `fam_size`, but an explicit boolean value that classifies someone as alone (1) or not (0).
+  **Why:** Lots of Kaggle notebooks show that being alone correlates with survival odds. The model can learn that from `fam_size`, but as an explicit boolean value that classifies someone as alone (1) or not (0).
 
 - **Title** from `Name` (Mr, Mrs, Miss, Master, Rare)  
   **Why:** Titles represent `age`, `gender`, and sometimes `status`. They’re surprisingly strong signals and more stable than raw name text. It also makes sense that women and children would be prioritized for safety first, so creating this variable can help incorporate that into the model.
@@ -63,49 +94,47 @@ I plotted the class counts:
 
 **Why:** We keep a final test set untouched for an honest evaluation, and carve a validation set out of the training data to tune/stop models without peeking at the test set.
 
+<details class="code-alt">
+  <summary><strong>Show code — split, drop dupes, freeze columns</strong></summary>
+
 ```python
-# One‑hot encode categoricals (drop_first avoids a redundant column)
+# One-hot encode categoricals (drop_first avoids a redundant column)
 df = pd.get_dummies(df, columns=["Sex", "Embarked", "title"], drop_first=True)
 
+# Define X/y (keeps things readable + leak-proof)
+X = df.drop(columns=["Survived"])         # features — includes one-hot columns
+y = df["Survived"].astype(int)            # target
 
-# Define X/y (keeps things readable + leak‑proof)
-X = df.drop(columns=["Survived"])
-y = df["Survived"].astype(int) # this is our target
-
-
-# Hold‑out test set (20%), stratified (preserving proportions so dataframes don't get mismatched) 
+# Hold-out test set (20%), stratified (preserving proportions so dataframes don’t get mismatched)
 X_train, X_test, y_train, y_test = train_test_split(
- X, y, test_size=0.20, random_state=42, stratify=y
+    X, y, test_size=0.20, random_state=42, stratify=y
 )
 
-# Then carve validation set (20% of train → 64/16/20)
+# Then carve validation set (20% of train = 64/16/20)
 X_tr, X_val, y_tr, y_val = train_test_split(
- X_train, y_train, test_size=0.20, random_state=42, stratify=y_train
+    X_train, y_train, test_size=0.20, random_state=42, stratify=y_train
 )
-
 
 # Drop any duplicate columns (can happen after merges/dummies)
 def _drop_dupes(df_: pd.DataFrame) -> pd.DataFrame:
- return df_.loc[:, ~df_.columns.duplicated()].copy()
+    return df_.loc[:, ~df_.columns.duplicated()].copy()
 
-
-X_tr = _drop_dupes(X_tr)
+X_tr  = _drop_dupes(X_tr)
 X_val = _drop_dupes(X_val)
 X_test= _drop_dupes(X_test)
 
-
 # Freeze the exact feature list/order for consistency in future exports
-COLS = list(X_tr.columns)
-X_tr = X_tr[COLS].copy()
-X_val = X_val[COLS].copy()
+COLS  = list(X_tr.columns)
+X_tr   = X_tr[COLS].copy()
+X_val  = X_val[COLS].copy()
 X_test = X_test[COLS].copy()
 
-
-print("train:", X_tr.shape, " valid:", X_val.shape, " test:", X_test.shape) 
-#output: train: (569, 15)  valid: (143, 15)  test: (179, 15)
-print("pos rate -> train:", float(y_tr.mean()), " valid:", float(y_val.mean()), " test:", float(y_test.mean())) 
-#output: pos rate -> train: 0.38312829525483305  valid: 0.38461538461538464  test: 0.3854748603351955
+print("train:", X_tr.shape, " valid:", X_val.shape, " test:", X_test.shape)
+print("pos rate -> train:", float(y_tr.mean()), " valid:", float(y_val.mean()), " test:", float(y_test.mean()))
 ```
+
+</details>
+
 ### Why these little details matter
 
 - **One-hot with `drop_first=True`.** Columns like `Sex` or `Embarked` are words. Models need numbers. One-hot makes a 0/1 column for each choice (e.g., `Sex_male`). Dropping the first level avoids sending the same information twice.
@@ -117,6 +146,9 @@ print("pos rate -> train:", float(y_tr.mean()), " valid:", float(y_val.mean()), 
 ## 5) Baseline model: Random Forest
 
 **Why:** Random Forests (RF) are strong, quick baselines for tabular data. They handle mixed features (after one-hot encoding), need little preprocessing, and give valuable feature importances, which can reveal more details about the data.
+
+<details>
+  <summary><strong>Show code — RandomForest (train & evaluate)</strong></summary>
 
 ```python
 from sklearn.ensemble import RandomForestClassifier
@@ -161,6 +193,8 @@ print("RF valid:", rf_val)   # e.g. {'acc': 0.825, 'f1': 0.786, 'auc': 0.868}
 print("RF test :", rf_test)  # e.g. {'acc': 0.811, 'f1': 0.738, 'auc': 0.845}
 ```
 
+</details>
+
 ### Interpreting the Random Forest results
 
 **Why AUC matters:**  
@@ -180,6 +214,9 @@ There’s a small drop from validation (≈0.825 acc) to test (≈0.811 acc). Th
 ## 6) XGBoost + Early stopping
 
 **Why:** Boosted trees typically beat single trees/forests on tabular data. Early stopping halts training when the validation score stops improving, and it also helps avoid overfitting.
+
+<details class="code-alt">
+  <summary><strong>Show code — XGBoost (train, early stopping, evaluate)</strong></summary>
 
 ```python
 import xgboost as xgb
@@ -242,6 +279,9 @@ print("XGB best_iteration:", bst.best_iteration, "best_valid_auc:", bst.best_sco
 print("XGB valid:", xgb_val) #output: {'acc': 0.8391608391608392, 'auc': 0.8986683312526009, 'f1': 0.7850467289719626}
 print("XGB test :", xgb_test) #output: {'acc': 0.8044692737430168, 'auc': 0.8978764478764477, 'f1': 0.7586206896551724}
 ```
+
+</details>
+
 **Fresh run (corrected build):**
 - **best_iteration ≈ 71** (picked by validation AUC)  
 - **Validation:** ACC ≈ 0.825, AUC ≈ 0.810, F1 ≈ 0.775  
@@ -257,7 +297,7 @@ print("XGB test :", xgb_test) #output: {'acc': 0.8044692737430168, 'auc': 0.8978
 
 ### A previous mistake
 
-I first trained an XGBoost model and saw an accuracy close to **0.9**. That felt way too high for this dataset, especially since it was my first time building something like this. So before posting anything, I stopped and double-checked. I looked up common pitfalls (like data leakage, tweaking the classification threshold on the same data I was measuring, or accidentally peeking at the test set) and asked a couple of colleagues with more ML experience. The feedback was clear: numbers that high on Titanic with these features are a **red flag** unless the validation is airtight.
+I first trained an XGBoost model and saw an accuracy close to **0.9**. That felt way too high for this dataset, especially since it was my first time building something like this. So before posting anything, I stopped and double-checked. I looked up common pitfalls (like data leakage, tweaking the classification threshold on the same data I was measuring, or accidentally peeking at the test set) and asked a couple of colleagues with more ML experience. I also discovered a couple of mismatched variable/column names, which meant some cells were training/evaluating on the wrong columns (or in the wrong order), quietly boosting the score. On top of that, there was data leakage: information from the answers (or test-like data) slipped into training/threshold-tuning so the model looked smarter than it really was on truly unseen data. The feedback was clear: numbers that high on Titanic with these features are a **red flag** unless the validation is airtight.
 
 Since being safe and trustworthy is better to me than being flashy, I decided to start from scratch (the models you saw above).
 
@@ -265,7 +305,7 @@ Since being safe and trustworthy is better to me than being flashy, I decided to
 - I used a clean 64/16/20 split (train/valid/test), stratified to reduce mismatching.
 - I froze the feature columns after one-hot encoding, so the matrices stay consistent.
 - For XGBoost I used early stopping on the validation set and predicted with the best iteration it found.
-- I report accuracy at a fixed 0.5 threshold. If I change the threshold, I tune it on validation and apply it only **once** to test.
+- I report accuracy at a fixed 0.5 threshold. If I end up changing the threshold, I tune it on validation and apply it only **once** to test.
 - I reran everything. The new numbers are lower, which was a bit sad, but they’re the kind you can trust, so I still felt satisfied with the results.
 
 > TL;DR: I didn’t publish the first result because it looked too good to be true. I rebuilt the pipeline carefully, and now the results are honest and reproducible.
@@ -326,4 +366,49 @@ Top-left = true “not survived,” top-right = false alarms, bottom-left = miss
 ### What’s next
 
 - **NASDAQ FCF project:** I’ll apply this clean setup to my NASDAQ fundamentals data set (free-cash-flow) study and write up the results.  
-- **Bonus CART explainer:** I plan to add one small decision tree (CART, depth=3) on the NASDAQ dataset as a “how the model thinks” figure. It’s not meant to beat RF/XGB — just to explain the rules in plain English. I feel like it could be a skill worth learning for future ML practice. 
+- **Bonus CART explainer:** I plan to add one small decision tree (CART, depth=3) on the NASDAQ dataset as a “how the model thinks” figure. It’s not meant to beat RF/XGB — just to explain the rules in plain English. I feel like it could be a skill worth learning for future ML practice.
+*If you spot mistakes or have ideas to improve this setup (or future projects like my NASDAQ FCF study), I’d love your advice. Please open an issue or leave a comment with suggestions/fixes.*
+
+## Appendix — Vocabulary (plain English)
+
+<details>
+  <summary><strong>Open glossary</strong></summary>
+
+- **Accuracy** — out of 100 people, how many the model gets right. (Good for quick context; can be misleading when classes are uneven.)
+- **Precision** — when the model says “survived,” how often is it correct? (Avoids false alarms. Yes, there *is* a difference between accuracy and precision)
+- **Recall** — out of all real survivors, how many did we find? (Avoids misses.)
+- **F1 score** — a single number that balances **precision** and **recall**. (Helpful when both matter.)
+- **Score / Probability** — a number between 0 and 1. For example, “how likely to survive."
+- **Threshold (cutoff)** — the line (like 0.5) that turns a score into Yes/No. Lower = catch more survivors but more false alarms; higher = fewer false alarms but miss more survivors.
+- **ROC curve** — shows trade-offs across all thresholds (catching survivors vs. crying wolf).
+- **AUC** — area under the ROC curve. If you pick one survivor and one non-survivor at random, AUC is how often the model ranks the survivor higher. (0.5 = coin flip; closer to 1.0 = better.)
+- **Confusion matrix** — a 2×2 table of correct/incorrect predictions at a chosen threshold (TP, FP, FN, TN). (Great for seeing mistakes.)
+- **Train / Validation / Test split** — learn on **train**, tune on **validation**, and judge once on **test**. (Keeps you honest.)
+- **Stratified split** — keeps the survivor rate similar across splits. (Fair comparisons.)
+- **Data leakage** — when future/answer info sneaks into training or tuning. (Inflates scores; must avoid.)
+- **Early stopping** — stop training when validation score stops improving. (Prevents overfitting.)
+- **One-hot encoding** — turn text categories (e.g., `Sex`) into 0/1 columns (`Sex_male`), usually with `drop_first=True` to avoid duplicate info.
+- **Frozen feature list (`COLS`)** — lock the exact columns/order used for modeling so every step sees the same inputs. (Prevents “N vs M features” bugs.)
+- **Random Forest** — many decision trees voting together. (Stable baseline for tabular data.)
+- **XGBoost** — trees built in sequence to fix prior mistakes. (Often a bit stronger than RF on tabular data.)
+- **Feature importance (RF)** — how much a feature reduces impurity across trees. (Rough influence signal.)
+- **Feature importance (XGB gain)** — how much a feature improved the model when used in splits. (Relative influence.)
+- **Class imbalance / Positive rate** — share of survivors in the data. (Helps decide metrics and thresholds.)
+- 
+**Confusion matrix**  
+A 2×2 table of correct vs. wrong predictions at one cutoff (ex. 0.5).  
+**Why we use it:** to see the trade-off between catching real positives (recall) and raising false alarms (precision), and to pick a sensible threshold.
+
+**ROC curve**  
+A line that shows model performance across all cutoffs (true-positive rate vs. false-positive rate).  
+**Why we use it:** it’s threshold-free, so it’s a fair way to compare models without arguing about a specific cutoff.
+
+**Feature importance — Random Forest**  
+How much each feature reduced the impurity across the random forest (rough influence).  
+**Why we use it:** quick sanity check for which inputs the model leaned on more.
+
+**Feature importance — XGBoost (gain)**  
+How much each feature improved the model’s loss when used in splits.  
+**Why we use it:** highlights the features that boosted performance the most.
+
+</details>
