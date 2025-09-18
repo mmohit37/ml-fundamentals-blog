@@ -110,7 +110,7 @@ Checking the bar chart tells us how skewed things are and which scores make sens
 
 **Why:** We keep a final test set untouched for an honest evaluation, and carve a validation set out of the training data to tune/stop models without peeking at the test set.
 
-<details class="code-alt">
+<details class="code-alt" markdown = 1>
   <summary><strong>Show code — split, drop dupes, freeze columns</strong></summary>
 
 ```python
@@ -163,7 +163,7 @@ print("pos rate -> train:", float(y_tr.mean()), " valid:", float(y_val.mean()), 
 
 **Why:** Random Forests (RF) are strong, quick baselines for tabular data. They handle mixed features (after one-hot encoding), need little preprocessing, and give valuable feature importances, which can reveal more details about the data.
 
-<details>
+<details class="code-alt" markdown = 1>
   <summary><strong>Show code — RandomForest (train & evaluate)</strong></summary>
 
 ```python
@@ -231,7 +231,7 @@ There’s a small drop from validation (≈0.825 acc) to test (≈0.811 acc). Th
 
 **Why:** Boosted trees typically beat single trees/forests on tabular data. Early stopping halts training when the validation score stops improving, and it also helps avoid overfitting.
 
-<details class="code-alt">
+<details class="code-alt" markdown = 1>
   <summary><strong>Show code — XGBoost (train, early stopping, evaluate)</strong></summary>
 
 ```python
@@ -386,7 +386,9 @@ Top-left = true “not survived,” top-right = false alarms, bottom-left = miss
 - **Bonus CART explainer:** I plan to add one small decision tree (CART, depth=3) on the NASDAQ dataset as a “how the model thinks” figure. It’s not meant to beat RF/XGB — just to explain the rules in plain English. I feel like it could be a skill worth learning for future ML practice.
 - *If you spot mistakes or have ideas to improve this setup (or future projects like my NASDAQ FCF study), I’d love your advice. Please open an issue or leave a comment with suggestions/fixes.*
 
-<details>
+## Appendix — Vocabulary (plain English) {#vocab}
+
+<details markdown = 1>
   <summary><strong>Open glossary</strong></summary>
 
 - **Accuracy** — out of 100 people, how many the model gets right. (Good for quick context; can be misleading when classes are uneven.)
