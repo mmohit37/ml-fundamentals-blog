@@ -8,25 +8,6 @@ tags: tutorial sklearn randomforest xgboost dtreeviz
 
 <style>
 /* Dark “Nord-ish” palette for code blocks (per-post) */
-pre.highlight, .highlighter-rouge pre {
-  background: #0b1221; 
-  color: #e6edf3;
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  overflow: auto;
-}
-.highlighter-rouge .na, .highlight .na { color:#7ee787; }
-.highlighter-rouge .nb, .highlight .nb { color:#79c0ff; } 
-.highlighter-rouge .kd, .highlight .kd,
-.highlighter-rouge .k,  .highlight .k  { color:#ff7b72; }
-.highlighter-rouge .s,  .highlight .s  { color:#a5d6ff; }
-.highlighter-rouge .mi, .highlight .mi { color:#ffa657; }
-.highlighter-rouge .c,  .highlight .c  { color:#8b949e; font-style:italic; }
-
-details.code-alt pre {
-  background: #151a2d;
-  color: #e6edf3;
-}
 details > summary {
   cursor: pointer;
   list-style: none;
@@ -54,7 +35,7 @@ details[open] > summary::after { content: " ⌃"; }
 I used the classic Kaggle **Titanic** dataset to warm up on feature engineering and tree-based models.  
 This post walks through what I did and why I did it, so people can replicate the experiment and understand my thought process.
 
-> **Heads-up:** If you are new to ML or unfamiliar with certain vocabulary, here’s a short **glossary** at the end for any jargon — jump to [Appendix: quick vocab](#vocab).
+> **Heads-up:** If you are new to ML or unfamiliar with certain vocabulary or plots, here’s a short **glossary** at the end for any jargon — jump to [Appendix: quick vocab](#vocab).
 ---
 
 ## 1) Goal & data
@@ -431,19 +412,19 @@ Top-left = true “not survived,” top-right = false alarms, bottom-left = miss
   
 - **Class imbalance / Positive rate** — share of survivors in the data. (Helps decide metrics and thresholds.)
 
-**Confusion matrix**  
+**Confusion matrix:**  
 A 2×2 table of correct vs. wrong predictions at one cutoff (e.g., 0.5).  
 **Why we use it:** to see the trade-off between catching real positives (recall) and raising false alarms (precision), and to pick a sensible threshold.
 
-**ROC curve**  
+**ROC curve:**  
 A line that shows model performance across all cutoffs (true-positive rate vs. false-positive rate).  
 **Why we use it:** it’s threshold-free, so it’s a fair way to compare models without arguing about a specific cutoff.
 
-**Feature importance — Random Forest**  
+**Feature importance — Random Forest:**  
 How much each feature reduced the impurity across the random forest (rough influence).  
 **Why we use it:** quick sanity check for which inputs the model leaned on more.
 
-**Feature importance — XGBoost (gain)**  
+**Feature importance — XGBoost (gain):**  
 How much each feature improved the model’s loss when used in splits.  
 **Why we use it:** highlights the features that boosted performance the most.
 
