@@ -30,10 +30,25 @@ details.code-alt pre {
 details > summary {
   cursor: pointer;
   list-style: none;
-  font-weight: 600;
-  margin: .5rem 0;
+  font-weight: 700;
+  margin: .6rem 0 .3rem;
+  padding: .45rem .7rem;
+  border-left: 4px solid #6ea8fe;      /* accent bar */
+  background: #0f1a33;                 /* darker chip */
+  color: #cfe4ff;                       /* text color */
+  border-radius: 8px;
 }
-details > summary::-webkit-details-marker { display: none; }
+details[open] > summary {
+  background: #162544;
+  color: #ffffff;
+}
+/* optional: small arrow */
+details > summary::after {
+  content: " ⌄";
+  float: right;
+  opacity: .8;
+}
+details[open] > summary::after { content: " ⌃"; }
 </style>
 
 I used the classic Kaggle **Titanic** dataset to warm up on feature engineering and tree-based models.  
@@ -86,7 +101,8 @@ I plotted the class counts:
 
 ![Survivor counts]({{ '/assets/images/titanic/survivor_counts_v2.png' | relative_url }})
 
-**Why:** Before we judge any model, we need to know how many people survived vs. didn’t survive in the training data. If one group is much bigger than the other, a lazy model can look “good” just by always guessing the bigger group. Checking the bar chart tells us how skewed things are and which scores make sense. In Titanic, non-survivors are more than survivors, but it’s not crazy unbalanced, so accuracy/AUC/F1 are still meaningful without fancy tricks. If the gap were huge, we’d consider things like class weights or different evaluation metrics.
+**Why:** Before we judge any model, we need to know how many people survived vs. didn’t survive in the training data. If one group is much bigger than the other, a lazy model can look “good” just by always guessing the bigger group.  
+Checking the bar chart tells us how skewed things are and which scores make sense. In Titanic, non-survivors are more than survivors, but it’s not crazy unbalanced, so accuracy/AUC/F1 are still meaningful without fancy tricks. If the gap were huge, we’d consider things like class weights or different evaluation metrics.
 
 ---
 
@@ -297,7 +313,8 @@ print("XGB test :", xgb_test) #output: {'acc': 0.8044692737430168, 'auc': 0.8978
 
 ### A previous mistake
 
-I first trained an XGBoost model and saw an accuracy close to **0.9**. That felt way too high for this dataset, especially since it was my first time building something like this. So before posting anything, I stopped and double-checked. I looked up common pitfalls (like data leakage, tweaking the classification threshold on the same data I was measuring, or accidentally peeking at the test set) and asked a couple of colleagues with more ML experience. I also discovered a couple of mismatched variable/column names, which meant some cells were training/evaluating on the wrong columns (or in the wrong order), quietly boosting the score. On top of that, there was data leakage: information from the answers (or test-like data) slipped into training/threshold-tuning so the model looked smarter than it really was on truly unseen data. The feedback was clear: numbers that high on Titanic with these features are a **red flag** unless the validation is airtight.
+I first trained an XGBoost model and saw an accuracy close to **0.9**. That felt way too high for this dataset, especially since it was my first time building something like this. So before posting anything, I stopped and double-checked. I looked up common pitfalls (like data leakage, tweaking the classification threshold on the same data I was measuring, or accidentally peeking at the test set) and asked a couple of colleagues with more ML experience. I also discovered a couple of mismatched variable/column names, which meant some cells were training/evaluating on the wrong columns (or in the wrong order), quietly boosting the score. On top of that, there was data leakage: information from the answers (or test-like data) slipped into training/threshold-tuning so the model looked smarter than it really was on truly unseen data.   
+The feedback was clear: numbers that high on Titanic with these features are a **red flag** unless the validation is airtight.
 
 Since being safe and trustworthy is better to me than being flashy, I decided to start from scratch (the models you saw above).
 
@@ -339,64 +356,81 @@ Since being safe and trustworthy is better to me than being flashy, I decided to
 ### Plots
 
 - ROC (validation): ![ROC valid]({{ "/assets/images/titanic/titanic_roc_valid.png" | relative_url }})
-*What you’re seeing:* For many different cutoffs, how often the model catches survivors (true-positive rate) vs. how often it cries wolf (false-positive rate). The curve up toward the top-left is good; AUC ≈ 0.89 which means a strong ranking on the validation set.  
-*Why it matters:* Shows the model’s general skill without picking a single threshold. Great for comparing models fairly.
+**What you’re seeing:** For many different cutoffs, how often the model catches survivors (true-positive rate) vs. how often it cries wolf (false-positive rate). The curve up toward the top-left is good; AUC ≈ 0.89 which means a strong ranking on the validation set.  
+**Why it matters:** Shows the model’s general skill without picking a single threshold. Great for comparing models fairly.
 
 - ROC (test): ![ROC test]({{ "/assets/images/titanic/titanic_roc_test.png" | relative_url }})
-*What you’re seeing:* Same idea, but on unseen test data. AUC ≈ 0.85 is a small drop from validation, which is normal and suggests the model generalizes.  
-*Why it matters:* Confirms the ranking quality holds up when we leave the training sandbox.
+**What you’re seeing:** Same idea, but on unseen test data. AUC ≈ 0.85 is a small drop from validation, which is normal and suggests the model generalizes.  
+**Why it matters:** Confirms the ranking quality holds up when we leave the training sandbox.
 
 - Confusion (test, RF @ tuned): ![CM RF]({{ "/assets/images/titanic/titanic_cm_test_rf.png" | relative_url }})
-*What you’re seeing:* Counts of correct/incorrect predictions at the chosen cutoff.  
+**What you’re seeing:** Counts of correct/incorrect predictions at the chosen cutoff.  
 Top-left = true “not survived,” top-right = false alarms, bottom-left = missed survivors, bottom-right = correctly found survivors.  
-*Why it matters:* With a lower threshold (~0.37), RF finds more survivors (higher recall) but pays with more false alarms. Useful when missing a survivor is worse than a false alert for the model.
+**Why it matters:** With a lower threshold (~0.37), RF finds more survivors (higher recall) but pays with more false alarms. Useful when missing a survivor is worse than a false alert for the model.
 
 - Confusion (test, XGB @ tuned): ![CM XGB]({{ "/assets/images/titanic/titanic_cm_test_xgb.png" | relative_url }})
-*What you’re seeing:* Same grid, stricter cutoff.  
-*Why it matters:* A higher threshold (~0.74) means XGB is pickier: fewer false alarms but more missed survivors. Good when false positives are costly, but bad if recall is your priority.
+**What you’re seeing:** Same grid, stricter cutoff.  
+**Why it matters:** A higher threshold (~0.74) means XGB is pickier: fewer false alarms but more missed survivors. Good when false positives are costly, but bad if recall is your priority.
 
 - Feature importance (RF): ![FI RF]({{ "/assets/images/titanic/titanic_importance_rf.png" | relative_url }})
-*What you’re seeing:* Which inputs reduced impurity the most across the forest (RF’s notion of “importance”). `Fare, Age, Sex/Title, Pclass` bubble to the top.  
-*Why it matters:* Matches the story: higher class and “women/children first” patterns carry a signal. Helps explain *why* the model works (not proof of causation). Also good for checking which features play the biggest roles in the model
+**What you’re seeing:** Which inputs reduced impurity the most across the forest (RF’s notion of “importance”). `Fare, Age, Sex/Title, Pclass` bubble to the top.  
+**Why it matters:** Matches the story: higher class and “women/children first” patterns carry a signal. Helps explain *why* the model works (not proof of causation). Also good for checking which features play the biggest roles in the model
 
 - Feature importance (XGB): ![FI XGB]({{ "/assets/images/titanic/titanic_importance_xgb.png" | relative_url }})
-*What you’re seeing:* Features that gave the biggest improvement when XGBoost split on them. `Title_Mr, Sex_male, and Pclass` dominate while others add smaller boosts.  
-*Why it matters:* Shows what XGB leans on most to separate classes, and aligns with the RF view and Titanic history.
+**What you’re seeing:** Features that gave the biggest improvement when XGBoost split on them. `Title_Mr, Sex_male, and Pclass` dominate while others add smaller boosts.  
+**Why it matters:** Shows what XGB leans on most to separate classes, and aligns with the RF view and Titanic history.
 
 ### What’s next
 
 - **NASDAQ FCF project:** I’ll apply this clean setup to my NASDAQ fundamentals data set (free-cash-flow) study and write up the results.  
 - **Bonus CART explainer:** I plan to add one small decision tree (CART, depth=3) on the NASDAQ dataset as a “how the model thinks” figure. It’s not meant to beat RF/XGB — just to explain the rules in plain English. I feel like it could be a skill worth learning for future ML practice.
-*If you spot mistakes or have ideas to improve this setup (or future projects like my NASDAQ FCF study), I’d love your advice. Please open an issue or leave a comment with suggestions/fixes.*
-
-## Appendix — Vocabulary (plain English)
+- *If you spot mistakes or have ideas to improve this setup (or future projects like my NASDAQ FCF study), I’d love your advice. Please open an issue or leave a comment with suggestions/fixes.*
 
 <details>
   <summary><strong>Open glossary</strong></summary>
 
 - **Accuracy** — out of 100 people, how many the model gets right. (Good for quick context; can be misleading when classes are uneven.)
-- **Precision** — when the model says “survived,” how often is it correct? (Avoids false alarms. Yes, there *is* a difference between accuracy and precision)
+  
+- **Precision** — when the model says “survived,” how often is it correct? (Avoids false alarms. Yes, there *is* a difference between accuracy and precision.)
+  
 - **Recall** — out of all real survivors, how many did we find? (Avoids misses.)
+  
 - **F1 score** — a single number that balances **precision** and **recall**. (Helpful when both matter.)
-- **Score / Probability** — a number between 0 and 1. For example, “how likely to survive."
+  
+- **Score / Probability** — a number between 0 and 1. For example, “how likely to survive.”
+  
 - **Threshold (cutoff)** — the line (like 0.5) that turns a score into Yes/No. Lower = catch more survivors but more false alarms; higher = fewer false alarms but miss more survivors.
+  
 - **ROC curve** — shows trade-offs across all thresholds (catching survivors vs. crying wolf).
+  
 - **AUC** — area under the ROC curve. If you pick one survivor and one non-survivor at random, AUC is how often the model ranks the survivor higher. (0.5 = coin flip; closer to 1.0 = better.)
+  
 - **Confusion matrix** — a 2×2 table of correct/incorrect predictions at a chosen threshold (TP, FP, FN, TN). (Great for seeing mistakes.)
+  
 - **Train / Validation / Test split** — learn on **train**, tune on **validation**, and judge once on **test**. (Keeps you honest.)
+  
 - **Stratified split** — keeps the survivor rate similar across splits. (Fair comparisons.)
+  
 - **Data leakage** — when future/answer info sneaks into training or tuning. (Inflates scores; must avoid.)
+  
 - **Early stopping** — stop training when validation score stops improving. (Prevents overfitting.)
+  
 - **One-hot encoding** — turn text categories (e.g., `Sex`) into 0/1 columns (`Sex_male`), usually with `drop_first=True` to avoid duplicate info.
+  
 - **Frozen feature list (`COLS`)** — lock the exact columns/order used for modeling so every step sees the same inputs. (Prevents “N vs M features” bugs.)
+  
 - **Random Forest** — many decision trees voting together. (Stable baseline for tabular data.)
+  
 - **XGBoost** — trees built in sequence to fix prior mistakes. (Often a bit stronger than RF on tabular data.)
+  
 - **Feature importance (RF)** — how much a feature reduces impurity across trees. (Rough influence signal.)
+  
 - **Feature importance (XGB gain)** — how much a feature improved the model when used in splits. (Relative influence.)
+  
 - **Class imbalance / Positive rate** — share of survivors in the data. (Helps decide metrics and thresholds.)
-- 
+
 **Confusion matrix**  
-A 2×2 table of correct vs. wrong predictions at one cutoff (ex. 0.5).  
+A 2×2 table of correct vs. wrong predictions at one cutoff (e.g., 0.5).  
 **Why we use it:** to see the trade-off between catching real positives (recall) and raising false alarms (precision), and to pick a sensible threshold.
 
 **ROC curve**  
