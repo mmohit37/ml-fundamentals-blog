@@ -222,22 +222,27 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 feat_names = list(X_tr.columns)
 
-dtr = xgb.DMatrix(X_tr.to_numpy(dtype=float),   label=y_tr.to_numpy(),   feature_names=feat_names)
-dval= xgb.DMatrix(X_val.to_numpy(dtype=float),  label=y_val.to_numpy(),  feature_names=feat_names)
-dte = xgb.DMatrix(X_test.to_numpy(dtype=float), label=y_test.to_numpy(), feature_names=feat_names)
 
+dtr = xgb.DMatrix(X_tr.to_numpy(dtype=float), label=y_tr.to_numpy(float), feature_names=feat_names)
+dval = xgb.DMatrix(X_val.to_numpy(dtype=float), label=y_val.to_numpy(float), feature_names=feat_names)
+dte = xgb.DMatrix(X_test.to_numpy(dtype=float), label=y_test.to_numpy(float), feature_names=feat_names)
+
+
+# Class balance helper (small skew) used only to keep training stable across splits
 pos = int(y_tr.sum()); neg = len(y_tr) - pos
+
+
 params = {
     "objective": "binary:logistic",
-    "eval_metric": "auc",
+    "eval_metric": "auc", # why: threshold‑free ranking metric for early stopping
     "eta": 0.05,
     "max_depth": 4,
-    "subsample": 0.9,
-    "colsample_bytree": 0.8,
+    "subsample": 0.90,
+    "colsample_bytree": 0.80,
     "min_child_weight": 1,
-    "lambda": 1.0,
-    "alpha": 0.0,
-    "scale_pos_weight": neg / max(pos, 1),
+    "lambda": 1.0, # L2
+    "alpha": 0.0, # L1
+    "scale_pos_weight": neg / max(pos, 1), # why: mild correction if the class ratio drifts
     "tree_method": "hist",
     "seed": 42,
 }
@@ -251,30 +256,40 @@ bst = xgb.train(
     verbose_eval=False,
 )
 
-# Predictions at the best iteration
-xgb_val_proba  = bst.predict(dval, iteration_range=(0, bst.best_iteration + 1))
-xgb_test_proba = bst.predict(dte,  iteration_range=(0, bst.best_iteration + 1))
-xgb_val_pred   = (xgb_val_proba  >= 0.5).astype(int)
-xgb_test_pred  = (xgb_test_proba >= 0.5).astype(int)
+
+best_it = getattr(bst, "best_iteration", None)
+
+try:
+    val_proba = bst.predict(dval, iteration_range=(0, best_it + 1))
+    test_proba = bst.predict(dte, iteration_range=(0, best_it + 1))
+except TypeError:
+    ntree_limit = getattr(bst, "best_ntree_limit", 0) or 0
+    val_proba = bst.predict(dval, ntree_limit=ntree_limit if ntree_limit > 0 else None)
+    test_proba = bst.predict(dte, ntree_limit=ntree_limit if ntree_limit > 0 else None)
+
+val_pred = (val_proba >= 0.5).astype(int)
+test_pred = (test_proba >= 0.5).astype(int)
 
 xgb_val = dict(
     model="XGBoost",
     split="valid",
-    acc=accuracy_score(y_val, xgb_val_pred),
-    f1=f1_score(y_val, xgb_val_pred),
-    auc=roc_auc_score(y_val, xgb_val_proba),
+    acc=float(accuracy_score(y_val, val_pred)),
+    f1=float(f1_score(y_val, val_pred)),
+    auc=float(roc_auc_score(y_val, val_proba)),
 )
+
+
 xgb_test = dict(
     model="XGBoost",
     split="test",
-    acc=accuracy_score(y_test, xgb_test_pred),
-    f1=f1_score(y_test, xgb_test_pred),
-    auc=roc_auc_score(y_test, xgb_test_proba),
+    acc=float(accuracy_score(y_test, test_pred)),
+    f1=float(f1_score(y_test, test_pred)),
+    auc=float(roc_auc_score(y_test, test_proba)),
 )
 
-print("XGB best_iteration:", bst.best_iteration, "best_valid_auc:", bst.best_score)  #output: ("XGB best_iteration: 0", best_valid_auc: 0.9138576779026217
-print("XGB valid:", xgb_val) #output: {'acc': 0.8391608391608392, 'auc': 0.8986683312526009, 'f1': 0.7850467289719626}
-print("XGB test :", xgb_test) #output: {'acc': 0.8044692737430168, 'auc': 0.8978764478764477, 'f1': 0.7586206896551724}
+print("XGB best_iteration:", best_it, "best_valid_auc:", getattr(bst, "best_score", None)) #output: XGB best_iteration: 71 best_valid_auc: 0.890599173553719
+print("XGB valid:", xgb_val) #output: XGB valid: {'model': 'XGBoost', 'split': 'valid', 'acc': 0.8251748251748252, 'f1': 0.7747747747747747, 'auc': 0.890599173553719}
+print("XGB test :", xgb_test) #output: XGB test : {'model': 'XGBoost', 'split': 'test', 'acc': 0.8268156424581006, 'f1': 0.7862068965517242, 'auc': 0.8506587615283268}
 ```
 
 </details>
@@ -285,8 +300,8 @@ print("XGB test :", xgb_test) #output: {'acc': 0.8044692737430168, 'auc': 0.8978
 - **Test:** ACC ≈ 0.827, AUC ≈ 0.851, F1 ≈ 0.786
 
 **Why this matters:**
-- XGBoost slightly edges Random Forest on test accuracy and AUC. Boosting focuses on tough cases and usually squeezes out a bit more signal on tabular data.
-- Early stopping keeps things honest: I stop when validation AUC stops improving and then predict using the best iteration. The test set stays untouched until the very end.
+- XGBoost did a little better on my held-out data. It learns from the mistakes of earlier trees, so it often pulls a bit more signal from the same columns.
+- I stop training as soon as the validation score stops getting better, then use that version for my results. The test set stays unseen until the very end, so the accuracy isn’t “helped” by peeking at it.
 
 **Real-world tie-in:** Same story as the RF (Sex, Pclass, Title, Age/Fare) but a bit better at ranking the close calls, which nudges the AUC a bit higher.
 
