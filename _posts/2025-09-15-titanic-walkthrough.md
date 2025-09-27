@@ -125,9 +125,6 @@ COLS  = list(X_tr.columns)
 X_tr   = X_tr[COLS].copy()
 X_val  = X_val[COLS].copy()
 X_test = X_test[COLS].copy()
-
-print("train:", X_tr.shape, " valid:", X_val.shape, " test:", X_test.shape)
-print("pos rate -> train:", float(y_tr.mean()), " valid:", float(y_val.mean()), " test:", float(y_test.mean()))
 ```
 
 </details>
