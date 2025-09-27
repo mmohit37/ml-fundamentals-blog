@@ -185,9 +185,8 @@ rf_test = dict(
     auc=roc_auc_score(y_test, rf_test_proba),
 )
 
-print("RF oob_score (train):", getattr(rf, "oob_score_", None))
-print("RF valid:", rf_val)   # e.g. {'acc': 0.825, 'f1': 0.786, 'auc': 0.868}
-print("RF test :", rf_test)  # e.g. {'acc': 0.811, 'f1': 0.738, 'auc': 0.845}
+print("RF valid:", rf_val)   # output: {'acc': 0.825, 'f1': 0.786, 'auc': 0.868}
+print("RF test :", rf_test)  # output: {'acc': 0.811, 'f1': 0.738, 'auc': 0.845}
 ```
 
 </details>
