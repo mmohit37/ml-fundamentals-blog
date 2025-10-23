@@ -2,6 +2,7 @@
 layout: post
 title: "NASDAQ Free Cash Flow: can FCF strength predict returns?"
 date: 2025-10-23
+excerpt: "A data-driven look at whether Free Cash Flow can predict future stock performance on the NASDAQ."
 categories: quant nasdaq
 tags: finance freecashflow backtest xgboost
 ---
@@ -22,13 +23,67 @@ I built lag-safe forward returns (so we don’t “peek” into the future), com
 
 By the way, if any terms seem confusing to you, check out the glossary: [Jump to Glossary →](#appendix--quick-glossary-plain-english)
 
+I also made a few changes compared ot my last post. I realize that I didn't really explain the different variables in the dataset, which could cause some confusion if you've never seen this dataset. So I'll make sure to explain the important ones before I start.
+
+Another detail I changed was adding the plots right after each code block, so it makes sense in context. In my last post, I just put all the plots at the end, which doesn't make much sense.
+
 <details>
   <summary><strong>Spoiler (click to expand)</strong></summary>
 
-Positive FCF did look better than negative FCF in averages, but the data is thin  
-and it’s not enough to predict individual stock prices yet.
+Positive FCF did look better than negative FCF in averages, but the data is thin, and it’s not enough to predict individual stock prices yet.
 
 </details>
+
+## Dataset & Key Variables
+
+The dataset combines company fundamentals, valuation metrics, and insider trading data for **NASDAQ-listed companies**, organized by fiscal year.  
+Each row represents a single company in a given year — a panel format that allows us to link fundamentals to future stock performance.
+
+Like I mentioned before, here are some of the most important variables used throughout this analysis:
+
+### Core identifiers
+| Variable | Description |
+|-----------|--------------|
+| **Ticker** | The company’s stock symbol, used to match fundamentals with historical price data. |
+| **Financial_currentPrice** | The company’s stock price at the time of data capture. Used for context but not as a predictive feature. |
+
+### Financial fundamentals
+| Variable | Description |
+|-----------|--------------|
+| **Financial_totalRevenue** | Total annual sales. |
+| **Financial_ebitda** | Earnings before interest, taxes, depreciation, and amortization (essentially paying off debt). |
+| **Financial_freeCashflow** | Cash generated after capital spending, our main focus variable (FCF). |
+| **Financial_totalDebt** | Total debt outstanding, used to gauge leverage and balance sheet strength. |
+| **Financial_totalCash** / **Financial_totalCashPerShare** | Measures of available liquidity, giving a sense of financial cushion. |
+| **Financial_returnOnAssets** / **Financial_returnOnEquity** | Efficiency ratios showing how effectively a company uses assets or equity to generate profit. |
+| **Financial_quickRatio** / **Financial_currentRatio** | Liquidity ratios showing how easily short-term obligations can be covered. |
+| **Financial_ebitdaMargins** / **Financial_profitMargins** | Profitability ratios that normalize earnings and cash flow by revenue. |
+
+### Valuation & leverage
+| Variable | Description |
+|-----------|--------------|
+| **Financial_debtToEquity** | Measures leverage, higher values suggest more debt relative to equity. |
+| **Financial_revenuePerShare** | Total revenue divided by shares outstanding, a per-share view of scale. |
+| **KeyStats_enterpriseValue** | Total market value of equity plus debt, minus cash, used for valuation comparisons. |
+| **KeyStats_priceToBook** | Valuation ratio comparing market price to book value. |
+| **KeyStats_enterpriseToEbitda** | A valuation multiple comparing enterprise value to EBITDA (earnings before interest, taxes, depreciation, and amortization). |
+
+### Ownership & insider activity
+| Variable | Description |
+|-----------|--------------|
+| **KeyStats_sharesOutstanding** | Total number of shares available, used to standardize insider transactions. |
+| **KeyStats_heldPercentInsiders** | Percentage of shares held by company insiders. |
+| **SharePurchase_buyInfoCount** / **SharePurchase_sellInfoCount** | Number of insider buy or sell transactions in a period. |
+| **SharePurchase_buyInfoShares** / **SharePurchase_sellInfoShares** | Number of shares involved in insider buys or sells. |
+| **SharePurchase_netInfoShares** / **SharePurchase_netPercentInsiderShares** | Net difference between insider buying and selling — used to gauge insider sentiment. |
+
+### Why these matter
+Together, these features cover three angles of company health:
+1. **Operational strength** — cash generation, profitability, and efficiency (e.g., FCF, margins, ROA/ROE).  
+2. **Financial structure** — debt, liquidity, and valuation context (e.g., debt/equity, enterprise value).  
+3. **Behavioral signals** — insider buying and selling activity, which sometimes hints at management confidence.  
+
+Not every feature is used in every section, but the experiments that follow (deciles, flips, and the ML model) all draw from this shared foundation.
 
 ## 2) Data & Setup
 
@@ -42,7 +97,7 @@ On its own, that’s just a lot of accounting data. To study whether Free Cash F
 Free Cash Flow is the cash a company has left after paying for operations and investments. Thus:  
 **FCF = Operating Cash Flow - Capital Expenditures**
 
-**Why start here**? Because positive FCF usually means a company has flexibility. It can grow, reduce debt, or return money to shareholders. Negative FCF can mean the opposite (or simply too heavy of an investment).
+**Why start here**? Because positive FCF usually means a company has flexibility. It can grow, reduce debt, or return money to shareholders. Negative FCF can mean the opposite (or simply too heavy an investment).
 
 ---
 
@@ -1157,6 +1212,13 @@ it showed the limits of what’s possible for me right now, and reminded me that
   Why it matters: it can make a model look great on paper but fail in real life.
 
 - **Panel (company-year panel)** — a table where each row represents one company in one year.  
-  Why it matters: lets us compare results consistently across firms and time.
+  Why it matters: it lets us compare results consistently across firms and time.
 
 </details>
+
+**Next Steps**:
+I plan on completing this AI course to gain more foundational knowledge. I feel like I've gotten better at the technical aspect of AI/ML, but I still want to understand more of the theory and explore different applications of it.
+
+So sadly, I probably won't be posting for a while until I finish that course. But until then, I'll see you all next time!
+
+If you have any questions or suggestions, please feel free to shoot an email to mohitmohanraj05@gmail.com
