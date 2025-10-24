@@ -23,7 +23,7 @@ I built lag-safe forward returns (so we don’t “peek” into the future), com
 
 By the way, if any terms seem confusing to you, check out the glossary: [Jump to Glossary →](#appendix--quick-glossary-plain-english)
 
-I also made a few changes compared ot my last post. I realize that I didn't really explain the different variables in the dataset, which could cause some confusion if you've never seen this dataset. So I'll make sure to explain the important ones before I start.
+I also made a few changes compared to my last post. I realize that I didn't really explain the different variables in the dataset, which could cause some confusion if you've never seen this dataset. So I'll make sure to explain the important ones before I start.
 
 Another detail I changed was adding the plots right after each code block, so it makes sense in context. In my last post, I just put all the plots at the end, which doesn't make much sense.
 
@@ -265,6 +265,7 @@ print(summary)
 
 # Keep `panel_yearly` for further charts
 ```
+
 </details>
 
 {% raw %}
@@ -373,6 +374,7 @@ for tk in all_tickers:
 ret_lag = pd.DataFrame(rows)
 panel_yearly_lag = panel_yearly.merge(ret_lag, on=['Ticker','year'], how='inner')
 ```
+
 </details>
 
 {% raw %}
@@ -452,6 +454,7 @@ ls_dec['ls'] = ls_dec['q10'] - ls_dec['q01']
 print("Q10−Q1 by year:")
 print(ls_dec)
 ```
+
 </details>
 
 {% raw %}
@@ -505,6 +508,7 @@ for y, g in p2.groupby('year'):
         rows.append({'year': y, 'sector_neutral_spread': float(np.mean(sec_means)), 'sectors': len(sec_means)})
 sec_neutral = pd.DataFrame(rows)
 ```
+
 </details>
 
 {% raw %}
@@ -697,6 +701,7 @@ ax2.set_ylabel('Count')
 ax2.grid(True, axis='y', linewidth=0.5)
 plt.show()
 ```
+
 </details>
 
 {% raw %}
@@ -1052,6 +1057,7 @@ else:
     ax.legend()
     plt.show()
 ```
+
 </details>
 
 {% raw %}
