@@ -27,7 +27,7 @@ I also made a few changes compared to my last post. I realize that I didn't real
 
 Another detail I changed was adding the plots right after each code block, so it makes sense in context. In my last post, I just put all the plots at the end, which doesn't make much sense.
 
-<details>
+<details class="code-alt" markdown="1">
   <summary><strong>Spoiler (click to expand)</strong></summary>
 
 Positive FCF did look better than negative FCF in averages, but the data is thin, and it’s not enough to predict individual stock prices yet.
@@ -106,7 +106,7 @@ This gives us a quick way to split “healthy cash generators” from “cash bu
 The code below reshapes raw financial data into a structured “panel” format — one row per company per year.
 Each row includes free cash flow (FCF), a binary flag for positive/negative FCF, and next-year stock returns.
 
-<details>
+<details class="code-alt" markdown="1">
   <summary><strong>Show code — [short description]</strong></summary>
   
 ```python
@@ -321,7 +321,7 @@ We also generated non-winsorized plots, but they showed the same overall pattern
 
 Figure 1 — Winsorized (1%–99%) next-year returns. The top chart compares returns between positive and negative FCF firms, while the bottom chart groups stocks by XGBoost model score quintiles (1 = lowest, 5 = highest). Both tell the same story: companies with stronger cash generation or higher model scores tended to perform slightly better, but not dramatically so.
 
-<details>
+<details class="code-alt" markdown="1">
   <summary><strong>Show code — lag-safe forward returns</strong></summary>
 
 ```python
@@ -427,7 +427,7 @@ The spread between Q10 and Q1 was generally positive, echoing the same story: mo
 
 This gives us a directional “signal,” but again, it’s based on a tiny window. In financial data, a pattern that looks strong in just a few years can easily flip once the sample gets bigger.
 
-<details>
+<details class="code-alt" markdown="1">
   <summary><strong>Show code — FCF deciles (Q10–Q1)</strong></summary>
 
 ```python
@@ -478,7 +478,7 @@ year
 ```
 {% endraw %}
 
-<details>
+<details class="code-alt" markdown="1">
   <summary><strong>Show code — sector-neutral FCF spreads</strong></summary>
 
 ```python
@@ -594,7 +594,7 @@ This tells us two things:
 
 In other words, flips are conceptually appealing, but with this dataset they don’t deliver the insight we need.
 
-<details>
+<details class="code-alt" markdown="1">
   <summary><strong>Show code — flip tracking</strong></summary>
 
 ```python
@@ -806,7 +806,7 @@ This step highlights the gap between finding a broad tendency (FCF+ beats FCF–
 
 That means this dataset, as it stands, isn’t enough to build a predictive model.
 
-<details>
+<details class="code-alt" markdown="1">
   <summary><strong>Show code — walk-forward XGBoost</strong></summary>
 
 ```python
