@@ -321,7 +321,7 @@ In simple terms: we clipped the extreme highs and lows so that one wild penny st
 
 We also generated non-winsorized plots, but they showed the same overall pattern with a lot more noise and outliers — so we only kept the winsorized ones for clarity.
 
-![Figure 1 — Winsorized next-year returns by FCF sign and XGBoost score quintile](assets/images/NASDAQ/fcf_winsorized_returns.png)  
+![Figure 1 — Winsorized next-year returns by FCF sign and XGBoost score quintile](../assets/images/NASDAQ/fcf_winsorized_returns.png)  
 
 Figure 1 — Winsorized (1%–99%) next-year returns. The top chart compares returns between positive and negative FCF firms, while the bottom chart groups stocks by XGBoost model score quintiles (1 = lowest, 5 = highest). Both tell the same story: companies with stronger cash generation or higher model scores tended to perform slightly better, but not dramatically so.
 
@@ -523,17 +523,17 @@ Sector-neutral summary:
 
 ---
 
-![Figure 2a — FCF+ − FCF− spread by year (lagged, 1%–99% winsorized)](assets/images/NASDAQ/fcf_spread_by_year.png)  
+![Figure 2a — FCF+ − FCF− spread by year (lagged, 1%–99% winsorized)](../assets/images/NASDAQ/fcf_spread_by_year.png)  
 Figure 2a — Average 1-year return difference between positive and negative FCF companies. Firms with positive free cash flow tended to perform better, though not consistently across all years.
 
 ---
 
-![Figure 2b — FCF magnitude Q10 − Q1 spread by year (lagged)](assets/images/NASDAQ/fcf_decile_spread_by_year.png)  
+![Figure 2b — FCF magnitude Q10 − Q1 spread by year (lagged)](../assets/images/NASDAQ/fcf_decile_spread_by_year.png)  
 Figure 2b — When sorting by FCF strength (top 10% vs. bottom 10%), higher FCF generally aligned with stronger next-year returns, reinforcing the same “cash health” signal.
 
 ---
 
-![Figure 2c — Sector-neutral FCF+ − FCF− spread by year (lagged)](assets/images/NASDAQ/fcf_sector_neutral_spread.png)  
+![Figure 2c — Sector-neutral FCF+ − FCF− spread by year (lagged)](../assets/images/NASDAQ/fcf_sector_neutral_spread.png)  
 Figure 2c — Sector-adjusted version of the FCF spread. Even after controlling for industry mix, companies with stronger cash generation still showed better average returns.
 
 ---
@@ -720,7 +720,7 @@ year
 2021        3
 </pre>
 
-![Figure 3 — FCF sign flips and next-year returns](assets/images/NASDAQ/fcf_flips.png)  
+![Figure 3 — FCF sign flips and next-year returns](../assets/images/NASDAQ/fcf_flips.png)  
 Figure 3 — Count of companies that flipped their FCF sign each year (bottom), and the average next-year return for those flips (top).  
 Only a few firms flipped from negative to positive, and their next-year performance was still weak, which suggests that early recoveries in cash flow don’t translate immediately into stronger returns.
 
@@ -1073,7 +1073,7 @@ year
 2023        165       5      1  0.6000  0.5000  0.0000  0.0000  0.0000  -0.9489 -0.8286 -0.1203
 </pre>
 
-![Figure 4 — Walk-forward ML equity curve (lag-safe)](assets/images/NASDAQ/xgb_walkforward_equity_curve.png)  
+![Figure 4 — Walk-forward ML equity curve (lag-safe)](../assets/images/NASDAQ/xgb_walkforward_equity_curve.png)  
 Figure 4 — Walk-forward test of a simple XGBoost model trained on FCF, FCF sign, and prior-year return.  
 The blue curve (“ML Long”) shows the model’s top-ranked stocks each year, compared against an equal-weight benchmark.  
 The lines move almost in sync, a sign that fundamentals alone aren’t adding much predictive power.
