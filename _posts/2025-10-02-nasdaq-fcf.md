@@ -274,7 +274,7 @@ print(summary)
 </details>
 ```
 
-<pre>
+```text
 Output:
 panel_yearly rows: 1019
 
@@ -294,7 +294,7 @@ Overall (all years combined):
 fcf_pos                                     
 FCF−       904 -0.418151 -0.617768  0.931434
 FCF+       115 -0.184402 -0.203704  0.495676
-</pre>
+```
 
 **What the code says**:  
 This block converts the raw NASDAQ fundamentals into a clean and readable format:
@@ -381,7 +381,7 @@ panel_yearly_lag = panel_yearly.merge(ret_lag, on=['Ticker','year'], how='inner'
 </details>
 ```
 
-<pre>
+```text
 Output:
 
 Report-lag safe sample: 1019
@@ -395,7 +395,7 @@ year
 2023     -0.436408 -0.146048  0.290361
 
 Pooled (lagged, winsorized) spread=0.2583, t=6.23, p=0.000, n+=115, n−=904
-</pre>
+```
 
 ---
 
@@ -459,7 +459,7 @@ print(ls_dec)
 </details>
 ```
 
-<pre>
+```text
 Output:
 
 Q10–Q1 by year:
@@ -476,7 +476,7 @@ year
 2021     -0.6651 -0.5952 -0.6389 -0.7789 -0.6011 -0.6124 -0.4410 -0.4849 -0.3178 -0.3983
 2022     -0.5124 -0.3644 -0.5752 -0.6104 -0.6240 -0.6856 -0.4460 -0.4512 -0.2993 -0.2655
 2023     -0.4842 -0.5576 -0.3239 -0.5310 -0.6056 -0.4185 -0.5020  0.0429 -0.1564 -0.0871
-</pre>
+```
 
 <details>
   <summary><strong>Show code — sector-neutral FCF spreads</strong></summary>
@@ -511,7 +511,7 @@ sec_neutral = pd.DataFrame(rows)
 </details>
 ```
 
-<pre>
+```text
 Output:
 
 Sector-neutral summary:
@@ -519,7 +519,7 @@ Sector-neutral summary:
 0  2021                0.176768        9
 1  2022                0.292646        9
 2  2023                0.111703       10
-</pre>
+```
 
 ---
 
@@ -701,7 +701,7 @@ plt.show()
 </details>
 ```
 
-<pre>
+```text
 Output:
 
 Flip counts by type:
@@ -718,7 +718,7 @@ Flips per year:
       n_flips
 year
 2021        3
-</pre>
+```
 
 ![Figure 3 — FCF sign flips and next-year returns]({{ "/assets/images/NASDAQ/fcf_flips.png" | relative_url }})
 Figure 3 — Count of companies that flipped their FCF sign each year (bottom), and the average next-year return for those flips (top).  
@@ -1054,7 +1054,7 @@ else:
 </details>
 ```
 
-<pre>
+```text
 Output:
 
 Universe: 297 tickers; Years: [2020, 2021, 2022, 2023]
@@ -1071,7 +1071,7 @@ year
 2021        113      40      4  0.6000  0.7356  0.3333  0.8000  0.2105  -0.5472 -0.6621  0.1149
 2022        153      12      1  0.5833  0.8000  0.0000  0.0000  0.0000  -0.6059 -0.8133  0.2074
 2023        165       5      1  0.6000  0.5000  0.0000  0.0000  0.0000  -0.9489 -0.8286 -0.1203
-</pre>
+```
 
 ![Figure 4 — Walk-forward ML equity curve (lag-safe)]({{ "/assets/images/NASDAQ/xgb_walkforward_equity_curve.png" | relative_url }})  
 Figure 4 — Walk-forward test of a simple XGBoost model trained on FCF, FCF sign, and prior-year return.  
