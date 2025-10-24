@@ -273,7 +273,6 @@ print(summary)
 # Keep `panel_yearly` for further charts
 </details>
 ```
-
 ```text
 Output:
 panel_yearly rows: 1019
@@ -380,7 +379,6 @@ panel_yearly_lag = panel_yearly.merge(ret_lag, on=['Ticker','year'], how='inner'
 
 </details>
 ```
-
 ```text
 Output:
 
@@ -458,7 +456,6 @@ print(ls_dec)
 
 </details>
 ```
-
 ```text
 Output:
 
@@ -510,7 +507,6 @@ sec_neutral = pd.DataFrame(rows)
 
 </details>
 ```
-
 ```text
 Output:
 
@@ -700,7 +696,6 @@ ax2.grid(True, axis='y', linewidth=0.5)
 plt.show()
 </details>
 ```
-
 ```text
 Output:
 
@@ -1053,7 +1048,6 @@ else:
     plt.show()
 </details>
 ```
-
 ```text
 Output:
 
