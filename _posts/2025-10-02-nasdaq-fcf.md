@@ -42,40 +42,32 @@ Each row represents a single company in a given year — a panel format that all
 Like I mentioned before, here are some of the most important variables used throughout this analysis:
 
 ### Core identifiers
-| Variable | Description |
-|-----------|--------------|
-| **Ticker** | The company’s stock symbol, used to match fundamentals with historical price data. |
-| **Financial_currentPrice** | The company’s stock price at the time of data capture. Used for context but not as a predictive feature. |
+- **Ticker** — The company’s stock symbol, used to match fundamentals with historical price data.  
+- **Financial_currentPrice** — The company’s stock price at the time of data capture. Used for context but not as a predictive feature.
 
 ### Financial fundamentals
-| Variable | Description |
-|-----------|--------------|
-| **Financial_totalRevenue** | Total annual sales. |
-| **Financial_ebitda** | Earnings before interest, taxes, depreciation, and amortization (essentially paying off debt). |
-| **Financial_freeCashflow** | Cash generated after capital spending, our main focus variable (FCF). |
-| **Financial_totalDebt** | Total debt outstanding, used to gauge leverage and balance sheet strength. |
-| **Financial_totalCash** / **Financial_totalCashPerShare** | Measures of available liquidity, giving a sense of financial cushion. |
-| **Financial_returnOnAssets** / **Financial_returnOnEquity** | Efficiency ratios showing how effectively a company uses assets or equity to generate profit. |
-| **Financial_quickRatio** / **Financial_currentRatio** | Liquidity ratios showing how easily short-term obligations can be covered. |
-| **Financial_ebitdaMargins** / **Financial_profitMargins** | Profitability ratios that normalize earnings and cash flow by revenue. |
+- **Financial_totalRevenue** — Total annual sales.  
+- **Financial_ebitda** — Earnings before interest, taxes, depreciation, and amortization (essentially paying off debt).  
+- **Financial_freeCashflow** — Cash generated after capital spending, our main focus variable (FCF).  
+- **Financial_totalDebt** — Total debt outstanding, used to gauge leverage and balance sheet strength.  
+- **Financial_totalCash / Financial_totalCashPerShare** — Measures of available liquidity, giving a sense of financial cushion.  
+- **Financial_returnOnAssets / Financial_returnOnEquity** — Efficiency ratios showing how effectively a company uses assets or equity to generate profit.  
+- **Financial_quickRatio / Financial_currentRatio** — Liquidity ratios showing how easily short-term obligations can be covered.  
+- **Financial_ebitdaMargins / Financial_profitMargins** — Profitability ratios that normalize earnings and cash flow by revenue.
 
 ### Valuation & leverage
-| Variable | Description |
-|-----------|--------------|
-| **Financial_debtToEquity** | Measures leverage, higher values suggest more debt relative to equity. |
-| **Financial_revenuePerShare** | Total revenue divided by shares outstanding, a per-share view of scale. |
-| **KeyStats_enterpriseValue** | Total market value of equity plus debt, minus cash, used for valuation comparisons. |
-| **KeyStats_priceToBook** | Valuation ratio comparing market price to book value. |
-| **KeyStats_enterpriseToEbitda** | A valuation multiple comparing enterprise value to EBITDA (earnings before interest, taxes, depreciation, and amortization). |
+- **Financial_debtToEquity** — Measures leverage; higher values suggest more debt relative to equity.  
+- **Financial_revenuePerShare** — Total revenue divided by shares outstanding, giving a per-share view of scale.  
+- **KeyStats_enterpriseValue** — Total market value of equity plus debt, minus cash, used for valuation comparisons.  
+- **KeyStats_priceToBook** — Valuation ratio comparing market price to book value.  
+- **KeyStats_enterpriseToEbitda** — A valuation multiple comparing enterprise value to EBITDA (earnings before interest, taxes, depreciation, and amortization).
 
 ### Ownership & insider activity
-| Variable | Description |
-|-----------|--------------|
-| **KeyStats_sharesOutstanding** | Total number of shares available, used to standardize insider transactions. |
-| **KeyStats_heldPercentInsiders** | Percentage of shares held by company insiders. |
-| **SharePurchase_buyInfoCount** / **SharePurchase_sellInfoCount** | Number of insider buy or sell transactions in a period. |
-| **SharePurchase_buyInfoShares** / **SharePurchase_sellInfoShares** | Number of shares involved in insider buys or sells. |
-| **SharePurchase_netInfoShares** / **SharePurchase_netPercentInsiderShares** | Net difference between insider buying and selling — used to gauge insider sentiment. |
+- **KeyStats_sharesOutstanding** — Total number of shares available, used to standardize insider transactions.  
+- **KeyStats_heldPercentInsiders** — Percentage of shares held by company insiders.  
+- **SharePurchase_buyInfoCount / SharePurchase_sellInfoCount** — Number of insider buy or sell transactions in a period.  
+- **SharePurchase_buyInfoShares / SharePurchase_sellInfoShares** — Number of shares involved in insider buys or sells.  
+- **SharePurchase_netInfoShares / SharePurchase_netPercentInsiderShares** — Net difference between insider buying and selling, used to gauge insider sentiment.
 
 ### Why these matter
 Together, these features cover three angles of company health:
@@ -1224,7 +1216,9 @@ it showed the limits of what’s possible for me right now, and reminded me that
 - **Panel (company-year panel)** — a table where each row represents one company in one year.  
   Why it matters: it lets us compare results consistently across firms and time.
 
-</details>
+</details>  
+
+
 
 **Next Steps**:
 I plan on completing this AI course to gain more foundational knowledge. I feel like I've gotten better at the technical aspect of AI/ML, but I still want to understand more of the theory and explore different applications of it.
