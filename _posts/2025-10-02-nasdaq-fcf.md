@@ -116,6 +116,7 @@ Each row includes free cash flow (FCF), a binary flag for positive/negative FCF,
 
 <details>
   <summary><strong>Show code — [short description]</strong></summary>
+  
 ```python
 import pandas as pd
 import numpy as np
@@ -271,8 +272,10 @@ print('\nOverall (all years combined):')
 print(summary)
 
 # Keep `panel_yearly` for further charts
-</details>
 ```
+</details>
+
+{% raw %}
 ```text
 Output:
 panel_yearly rows: 1019
@@ -294,6 +297,7 @@ fcf_pos
 FCF−       904 -0.418151 -0.617768  0.931434
 FCF+       115 -0.184402 -0.203704  0.495676
 ```
+{% endraw %}
 
 **What the code says**:  
 This block converts the raw NASDAQ fundamentals into a clean and readable format:
@@ -376,9 +380,10 @@ for tk in all_tickers:
 
 ret_lag = pd.DataFrame(rows)
 panel_yearly_lag = panel_yearly.merge(ret_lag, on=['Ticker','year'], how='inner')
-
-</details>
 ```
+</details>
+
+{% raw %}
 ```text
 Output:
 
@@ -394,6 +399,7 @@ year
 
 Pooled (lagged, winsorized) spread=0.2583, t=6.23, p=0.000, n+=115, n−=904
 ```
+{% endraw %}
 
 ---
 
@@ -453,9 +459,10 @@ ls_dec['ls'] = ls_dec['q10'] - ls_dec['q01']
 
 print("Q10−Q1 by year:")
 print(ls_dec)
-
-</details>
 ```
+</details>
+
+{% raw %}
 ```text
 Output:
 
@@ -474,6 +481,7 @@ year
 2022     -0.5124 -0.3644 -0.5752 -0.6104 -0.6240 -0.6856 -0.4460 -0.4512 -0.2993 -0.2655
 2023     -0.4842 -0.5576 -0.3239 -0.5310 -0.6056 -0.4185 -0.5020  0.0429 -0.1564 -0.0871
 ```
+{% endraw %}
 
 <details>
   <summary><strong>Show code — sector-neutral FCF spreads</strong></summary>
@@ -504,9 +512,10 @@ for y, g in p2.groupby('year'):
     if len(sec_means) > 0:
         rows.append({'year': y, 'sector_neutral_spread': float(np.mean(sec_means)), 'sectors': len(sec_means)})
 sec_neutral = pd.DataFrame(rows)
-
-</details>
 ```
+</details>
+
+{% raw %}
 ```text
 Output:
 
@@ -516,6 +525,7 @@ Sector-neutral summary:
 1  2022                0.292646        9
 2  2023                0.111703       10
 ```
+{% endraw %}
 
 ---
 
@@ -694,8 +704,10 @@ ax2.set_xlabel('year')
 ax2.set_ylabel('Count')
 ax2.grid(True, axis='y', linewidth=0.5)
 plt.show()
-</details>
 ```
+</details>
+
+{% raw %}
 ```text
 Output:
 
@@ -714,6 +726,7 @@ Flips per year:
 year
 2021        3
 ```
+{% endraw %}
 
 ![Figure 3 — FCF sign flips and next-year returns]({{ "/assets/images/NASDAQ/fcf_flips.png" | relative_url }})
 Figure 3 — Count of companies that flipped their FCF sign each year (bottom), and the average next-year return for those flips (top).  
@@ -1046,8 +1059,10 @@ else:
     ax.grid(True, axis='y', linewidth=0.5)
     ax.legend()
     plt.show()
-</details>
 ```
+</details>
+
+{% raw %}
 ```text
 Output:
 
@@ -1066,6 +1081,7 @@ year
 2022        153      12      1  0.5833  0.8000  0.0000  0.0000  0.0000  -0.6059 -0.8133  0.2074
 2023        165       5      1  0.6000  0.5000  0.0000  0.0000  0.0000  -0.9489 -0.8286 -0.1203
 ```
+{% endraw %}
 
 ![Figure 4 — Walk-forward ML equity curve (lag-safe)]({{ "/assets/images/NASDAQ/xgb_walkforward_equity_curve.png" | relative_url }})  
 Figure 4 — Walk-forward test of a simple XGBoost model trained on FCF, FCF sign, and prior-year return.  
