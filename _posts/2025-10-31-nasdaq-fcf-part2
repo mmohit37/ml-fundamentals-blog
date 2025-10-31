@@ -235,4 +235,6 @@ there isn’t enough data here to confirm it statistically.
 In the final part of this series, we’ll move from averages and group patterns to **testing prediction directly**.  
 We’ll build a simple walk-forward **XGBoost model** that tries to rank future winners based on fundamentals alone. Then we'll test whether Free Cash Flow adds any predictive power once we train it properly.
 
+Also, if you have any questions or suggestions, please feel free to tell me anything at mohitmohanraj05@gmail.com
+
 [Next → Part 3 — Walk-Forward Modeling & Conclusions](2025-11-05-nasdaq-fcf-part3)
