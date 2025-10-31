@@ -605,4 +605,6 @@ That’s not enough to trade on yet, but it’s a good first check that the idea
 In the next part of this series, we’ll go beyond the simple positive-vs-negative split.  
 We’ll look at **quartiles, sector-neutral spreads, and “flip” events**. These are cases where companies move from negative to positive FCF (or vice versa) and to see whether those transitions carry stronger signals.  
 
+If you have any questions or suggestions, please feel free to tell me at mohitmohanraj05@gmail.com. I'll see you all in the next post!
+
 [Next → Part 2 — Quartile & Sector-Neutral Analysis](2025-10-31-nasdaq-fcf-part2)
