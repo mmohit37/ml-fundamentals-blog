@@ -1,1 +1,204 @@
+---
+layout: post
+title: "NASDAQ Free Cash Flow (Part 2): Beyond averages — quartiles, sectors, and flips"
+date: 2025-10-31
+excerpt: "Part 2 of the series digs deeper: exploring FCF quartiles, sector-neutral spreads, and what happens when companies flip from negative to positive cash flow."
+categories: quant nasdaq
+tags: finance freecashflow fundamentals sectors
+series: "NASDAQ Free Cash Flow Series"
+published: false
+---
 
+**This post is Part 2 of the 3-part NASDAQ FCF series.**  
+Building on Part 1’s binary comparison, we now explore how Free Cash Flow behaves across quartiles, within sectors, and when companies flip from negative to positive (or vice versa).  
+
+The goal: to see whether the FCF–return relationship survives once we control for industry effects and look at individual turnaround cases.  
+
+[← Previous Part 1](2025-10-02-nasdaq-fcf-part1) | [Next → Part 3 — Walk-Forward Modeling & Conclusions](2025-10-02-nasdaq-fcf-part3)
+
+
+## 4) By Name & By Year (Part B)
+
+Averages show the big picture, but investors also care about individual names.  
+What we need to ask is: *What happens when a company flips from negative to positive FCF, or the reverse?*
+
+### Tracking flips
+
+We set up a simple pipeline to track these events:
+- **Negative → Positive** (a company finally turns cash-flow positive).  
+- **Positive → Negative** (a company slips into burning cash).  
+
+The idea is intuitive: a flip to positive might signal improvement, while a flip to negative could raise red flags.
+
+---
+
+### What the data shows
+
+In practice, the flip group is *tiny*.  
+Across 2020–2023, there are only a handful of cases (in one year, literally three names flip from negative to positive).  
+
+And the results are underwhelming:
+- Companies flipping to positive FCF do **not** consistently outperform.  
+- With so few observations, no strong conclusions can be drawn.
+
+---
+
+### Why this matters
+
+This tells us two things:
+1. At the company level, the sample is too thin to test the flip idea properly.  
+2. The “signal” in this dataset shows up more clearly in group-level averages than in individual flips.
+
+In other words, flips are conceptually appealing, but with this dataset they don’t deliver the insight we need.
+
+<details class="code-alt" markdown="1">
+  <summary><strong>Show code — flip tracking</strong></summary>
+
+```python
+from pathlib import Path
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+OUT_DIR = Path("data/processed/nasdaq_by_name")
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+# 0) Inputs
+if 'panel_yearly_lag' not in globals():
+    raise SystemExit("panel_yearly_lag missing. Run earlier steps to build yearly panel with lag-safe returns.")
+
+df = panel_yearly_lag.copy()
+
+# 1) Robust FCF & sign
+FCF_CANDIDATES = [
+    'Financial_freeCashflow', 'fcf', 'Financial_freeCashFlow', 'Financial_freeCashFlowTTM'
+]
+fcf_col = next((c for c in FCF_CANDIDATES if c in df.columns), None)
+if fcf_col is None:
+    raise SystemExit("No free cash flow column found in panel_yearly_lag. Expected one of: " + ", ".join(FCF_CANDIDATES))
+
+df['fcf'] = pd.to_numeric(df[fcf_col], errors='coerce')
+if 'fcf_pos' not in df.columns:
+    df['fcf_pos'] = (df['fcf'] > 0).astype(int)
+
+# 2) ADV eligibility & benchmark
+# If elig_by_year and bench exist, use them; else fallback to all-names bench.
+if 'elig_by_year' in globals() and isinstance(elig_by_year, dict):
+    df['adv_eligible'] = df.apply(lambda r: r['Ticker'] in elig_by_year.get(int(r['year']), set()), axis=1)
+    bench = (df[df['adv_eligible']]
+               .groupby('year')['ret_1y_lag']
+               .mean()
+               .rename('bench'))
+else:
+    df['adv_eligible'] = np.nan
+    bench = df.groupby('year')['ret_1y_lag'].mean().rename('bench')
+
+# Map bench & beat flag
+by_name = df[['Ticker','year','fcf','fcf_pos','ret_1y_lag','adv_eligible']].copy()
+by_name['bench'] = by_name['year'].map(bench)
+by_name['beat_bench'] = (by_name['ret_1y_lag'] > by_name['bench']).astype(int)
+
+# 3) FCF deciles within year (raw, not absolute)
+def _to_decile(s: pd.Series) -> pd.Series:
+    r = s.rank(method='first', pct=True)
+    d = np.ceil(r * 10.0)
+    return pd.Series(d, index=s.index).clip(1, 10).astype('Int64')
+
+by_name['fcf_decile'] = by_name.groupby('year')['fcf'].transform(_to_decile)
+
+# 4) Detect flips per ticker
+by_name = by_name.sort_values(['Ticker','year']).reset_index(drop=True)
+by_name['fcf_pos_prev'] = by_name.groupby('Ticker')['fcf_pos'].shift(1)
+by_name['flip'] = (by_name['fcf_pos_prev'].notna()) & (by_name['fcf_pos'] != by_name['fcf_pos_prev'])
+
+# Flip type labeling
+conditions = [
+    (by_name['flip']) & (by_name['fcf_pos_prev'] == 0) & (by_name['fcf_pos'] == 1),
+    (by_name['flip']) & (by_name['fcf_pos_prev'] == 1) & (by_name['fcf_pos'] == 0)
+]
+choices = ['neg→pos', 'pos→neg']
+by_name['flip_type'] = np.select(conditions, choices, default='none')
+
+# 5) Summaries
+flip_df = by_name[by_name['flip']].copy()
+# Counts by type
+flip_counts = (flip_df.groupby('flip_type')['Ticker']
+                     .count()
+                     .rename('count')
+                     .sort_values(ascending=False))
+# Performance by flip type
+flip_perf = (flip_df.groupby('flip_type')['ret_1y_lag']
+                    .agg(['count','mean','median'])
+                    .sort_values('mean', ascending=False))
+# Flips per year
+flips_per_year = (flip_df.groupby('year')['Ticker']
+                          .count()
+                          .rename('n_flips'))
+
+print("Flip counts by type:\n", flip_counts)
+print("\nNext-year returns by flip type:\n", flip_perf.round(4))
+print("\nFlips per year:\n", flips_per_year)
+
+# 7) Plots
+# (a) Mean/median next-year return by flip type
+fig1, ax1 = plt.subplots(figsize=(6,3))
+flip_perf[['mean','median']].plot(kind='bar', ax=ax1)
+ax1.set_title('Next-year return by flip type')
+ax1.set_xlabel('flip_type')
+ax1.set_ylabel('Return')
+ax1.grid(True, axis='y', linewidth=0.5)
+plt.show()
+
+# (b) Count of flips per year
+fig2, ax2 = plt.subplots(figsize=(6,3))
+flips_per_year.plot(kind='bar', ax=ax2)
+ax2.set_title('Count of FCF sign flips per year')
+ax2.set_xlabel('year')
+ax2.set_ylabel('Count')
+ax2.grid(True, axis='y', linewidth=0.5)
+plt.show()
+```
+
+</details>
+
+{% raw %}
+```text
+Output:
+
+Flip counts by type:
+flip_type
+neg→pos    3
+Name: count, dtype: int64
+
+Next-year returns by flip type:
+          count   mean   median
+flip_type
+neg→pos        3 -0.6551 -0.6814
+
+Flips per year:
+      n_flips
+year
+2021        3
+```
+{% endraw %}
+
+![Figure 3 — FCF sign flips and next-year returns]({{ "/assets/images/NASDAQ/fcf_flips.png" | relative_url }})
+Figure 3 — Count of companies that flipped their FCF sign each year (bottom), and the average next-year return for those flips (top).  
+Only a few firms flipped from negative to positive, and their next-year performance was still weak, which suggests that early recoveries in cash flow don’t translate immediately into stronger returns.
+
+
+**What the code says:**  
+This block tracks when companies shift from negative to positive FCF or vice versa,  
+and compares how those “flip” groups perform in the following year.  
+
+- Negative → Positive: a company that starts generating cash after burning it.  
+- Positive → Negative: a company that slips back into spending more than it earns.  
+
+It then plots two simple visuals:  
+1. The average next-year return for each flip type.  
+2. The number of flips per year.  
+
+The results show that these flip events are extremely rare in the dataset —  
+sometimes only a few per year, and their returns don’t form any clear pattern.  
+In short, while flipping positive might *sound* like a strong signal,  
+there isn’t enough data here to confirm it statistically.
