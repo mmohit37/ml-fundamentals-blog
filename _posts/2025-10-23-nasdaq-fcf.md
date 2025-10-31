@@ -576,39 +576,33 @@ That’s not enough to trade on yet, but it’s a good first check that the idea
   <summary><strong>Open glossary</strong></summary>
 
 - **Free Cash Flow (FCF)** — the cash a company has left after paying for operations and investments.  
-  Why it matters: positive FCF means a company is generating more cash than it spends, giving it flexibility to grow or return value to shareholders.
+  *Why it matters:* positive FCF means a company is generating more cash than it spends, giving it flexibility to grow or return value to shareholders.
 
 - **Return (or “next-year return”)** — the percentage change in a company’s stock price over the following year.  
-  Why it matters: it’s the main outcome we’re trying to connect to fundamentals like FCF.
+  *Why it matters:* it’s the main outcome we’re trying to connect to fundamentals like FCF.
 
 - **Lag-safe window** — measuring returns only after financial results are public (starting 90 days after year-end).  
-  Why it matters: prevents “peeking” into the future and keeps the analysis honest.
+  *Why it matters:* prevents “peeking” into the future and keeps the analysis honest.
 
 - **Winsorization** — trimming extreme highs and lows (like +500% or –95%) so they don’t distort averages.  
-  Why it matters: keeps results focused on typical behavior, not one-off outliers.
-
-- **Walk-forward test** — train the model on earlier years and test on the next one, repeating the process forward.  
-  Why it matters: mimics how a real investor would use past data to make future decisions.
-
-- **Equal-weight benchmark** — a simple baseline where you put the same $1 in every stock each year.  
-  Why it matters: helps check if your model actually adds value beyond a fair, passive strategy.
-
-- **XGBoost** — a machine learning algorithm that builds many small decision trees to improve prediction accuracy.  
-  Why it matters: it’s popular for tabular data and balances speed, performance, and interpretability.
-
-- **Accuracy** — the share of predictions the model gets right (e.g., calling positive vs. negative returns correctly).  
-  Why it matters: gives a quick sense of how often the model is correct overall.
-
-- **AUC (Area Under the ROC Curve)** — a measure of how well the model ranks winners higher than losers.  
-  Why it matters: unlike accuracy, AUC checks if the model’s confidence scores make sense across all thresholds.
-
-- **Feature** — an input variable used by the model (like FCF sign or last year’s return).  
-  Why it matters: good features describe the company in ways that help the model learn useful patterns.
-
-- **Data leakage** — when future information accidentally sneaks into training.  
-  Why it matters: it can make a model look great on paper but fail in real life.
+  *Why it matters:* keeps results focused on typical behavior, not one-off outliers.
 
 - **Panel (company-year panel)** — a table where each row represents one company in one year.  
-  Why it matters: it lets us compare results consistently across firms and time.
+  *Why it matters:* lets us compare results consistently across firms and time.
 
-</details>  
+- **Sector-neutral** — comparing companies within the same industry to control for sector effects.  
+  *Why it matters:* ensures differences aren’t just because one industry was hot that year.
+
+- **Decile analysis** — sorting companies into ten equal groups by a metric (like FCF).  
+  *Why it matters:* helps show whether stronger cash flow consistently links to better returns across the distribution.
+
+</details>
+
+---
+
+## Next Steps
+
+In the next part of this series, we’ll go beyond the simple positive-vs-negative split.  
+We’ll look at **quartiles, sector-neutral spreads, and “flip” events**. These are cases where companies move from negative to positive FCF (or vice versa) and to see whether those transitions carry stronger signals.  
+
+[Next → Part 2 — Quartile & Sector-Neutral Analysis](2025-10-31-nasdaq-fcf-part2)
