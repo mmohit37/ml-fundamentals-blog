@@ -6,7 +6,6 @@ excerpt: "Part 2 of the series digs deeper: exploring FCF quartiles, sector-neut
 categories: quant nasdaq
 tags: finance freecashflow fundamentals sectors
 series: "NASDAQ Free Cash Flow Series"
-published: false
 ---
 
 **This post is Part 2 of the 3-part NASDAQ FCF series.**  
@@ -16,6 +15,7 @@ The goal: to see whether the FCF–return relationship survives once we control 
 
 [← Previous Part 1](2025-10-23-nasdaq-fcf) | [Next → Part 3 — Walk-Forward Modeling & Conclusions](2025-11-05-nasdaq-fcf-part3)
 
+Again, if any terms seem confusing to you, check out the glossary: [Jump to Glossary →](#appendix--quick-glossary-plain-english)
 
 ## 4) By Name & By Year (Part B)
 
@@ -202,3 +202,37 @@ The results show that these flip events are extremely rare in the dataset —
 sometimes only a few per year, and their returns don’t form any clear pattern.  
 In short, while flipping positive might *sound* like a strong signal,  
 there isn’t enough data here to confirm it statistically.
+
+## Appendix — Quick Glossary (plain English)
+
+<details markdown="1">
+  <summary><strong>Open glossary</strong></summary>
+
+- **Free Cash Flow (FCF)** — the cash a company has left after paying for operations and investments.  
+  *Why it matters:* positive FCF means a company is generating more cash than it spends, giving it flexibility to grow or return value to shareholders.
+
+- **FCF flip** — when a company changes from negative to positive FCF (or vice versa) between years.  
+  *Why it matters:* flips can signal improvement or deterioration in financial health, but in this dataset they were too rare to form reliable patterns.
+
+- **Sector-neutral** — comparing companies only within the same industry.  
+  *Why it matters:* prevents results from being skewed by one hot or cold sector dominating performance.
+
+- **Decile / Quartile analysis** — sorting companies into ten (decile) or four (quartile) equal groups by a variable like FCF.  
+  *Why it matters:* shows whether stronger fundamentals consistently align with better returns across groups.
+
+- **Benchmark return** — the average return of all eligible stocks in a given year.  
+  *Why it matters:* serves as a baseline for comparing individual or group performance.
+
+- **Panel (company-year panel)** — a dataset where each row represents one company in one year.  
+  *Why it matters:* makes it possible to track changes over time and compare results consistently across firms.
+
+</details>
+
+---
+
+## Next Steps
+
+In the final part of this series, we’ll move from averages and group patterns to **testing prediction directly**.  
+We’ll build a simple walk-forward **XGBoost model** that tries to rank future winners based on fundamentals alone. Then we'll test whether Free Cash Flow adds any predictive power once we train it properly.
+
+[Next → Part 3 — Walk-Forward Modeling & Conclusions](2025-11-05-nasdaq-fcf-part3)
