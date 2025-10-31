@@ -16,6 +16,9 @@ We’ll close by reflecting on what worked, what didn’t, and what this data re
 
 [← Previous Part 2](2025-10-31-nasdaq-fcf-part2)
 
+Again (for the last time I promise), if any terms seem confusing to you, check out the glossary: [Jump to Glossary →](#appendix--quick-glossary-plain-english)
+
+
 ## 5) Simple Models & Strategies (Part C)
 
 So far, we’ve only compared averages and flips.  
@@ -449,6 +452,43 @@ It just means they tell a different story: one about **quality and resilience**,
 
 So while the model didn’t find a trading edge, the project did what it was supposed to:  
 it showed the limits of what’s possible for me right now, and reminded me that in research, an honest “no” is still progress.
+
+
+## Appendix — Quick Glossary (plain English)
+
+<details markdown="1">
+  <summary><strong>Open glossary</strong></summary>
+
+- **Walk-forward test** — training a model on past years and testing it on the next one, repeating forward.  
+  *Why it matters:* mimics how a real investor would use past data to make future decisions, avoiding “training on the future.”  
+
+- **XGBoost** — a tree-based machine learning algorithm that builds many small decision trees to improve prediction accuracy.  
+  *Why it matters:* efficient, interpretable, and often a strong baseline for financial or tabular data.  
+
+- **Feature** — an input variable used by the model (like FCF sign or prior-year return).  
+  *Why it matters:* good features summarize key company traits that might help predict outcomes.  
+
+- **Accuracy** — the share of predictions the model gets right (e.g., correctly calling positive vs. negative returns).  
+  *Why it matters:* gives a simple, direct sense of overall correctness.  
+
+- **AUC (Area Under the ROC Curve)** — measures how well the model ranks winners higher than losers across thresholds.  
+  *Why it matters:* unlike accuracy, AUC evaluates ranking quality, not just binary decisions.  
+
+- **Equal-weight benchmark** — a baseline where $1 is invested equally in every eligible stock each year.  
+  *Why it matters:* shows whether a model adds value beyond a neutral, fair portfolio.  
+
+- **Lag-safe return** — a return calculated only after results are public, starting 90 days post year-end.  
+  *Why it matters:* ensures the model uses only information investors could have known at the time.  
+
+- **Overfitting** — when a model memorizes noise in training data instead of learning general patterns.  
+  *Why it matters:* it looks great on past data but fails when tested on new years.  
+
+- **Panel (company-year panel)** — a dataset where each row represents one company in one year.  
+  *Why it matters:* keeps model training aligned with a consistent, comparable structure across time.  
+
+</details>
+
+---
 
 **Next Steps**:
 I plan on completing this AI course to gain more foundational knowledge. I feel like I've gotten better at the technical aspect of AI/ML, but I still want to understand more of the theory and explore different applications of it.
