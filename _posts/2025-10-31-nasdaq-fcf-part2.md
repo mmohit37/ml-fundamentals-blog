@@ -14,7 +14,7 @@ Building on Part 1’s binary comparison, we now explore how Free Cash Flow beha
 The goal: to see whether the FCF–return relationship survives once we control for industry effects and look at individual turnaround cases.  
 
 [← Previous Part 1]({{ site.baseurl }}{% post_url 2025-10-23-nasdaq-fcf %}) |
-[Next → Part 3 — Walk-Forward Modeling & Conclusions]({{ site.baseurl }}{% post_url 2025-11-05-nasdaq-fcf-part3 %})
+[Next → Part 3 — Walk-Forward Modeling & Conclusions]({{ site.baseurl }}{% post_url 2025-11-05-nasdaq-fcf-part3 %}}
 
 Again, if any terms seem confusing to you, check out the glossary: [Jump to Glossary →](#appendix--quick-glossary-plain-english)
 
