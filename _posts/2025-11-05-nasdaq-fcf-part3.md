@@ -14,7 +14,7 @@ a walk-forward XGBoost experiment that asks whether fundamentals alone can rank 
 
 We’ll close by reflecting on what worked, what didn’t, and what this data really teaches about the limits of using FCF as a forecasting tool.  
 
-[← Previous Part 2](2025-10-31-nasdaq-fcf-part2)
+[← Previous Part 2]({{ site.baseurl }}{% post_url 2025-10-31-nasdaq-fcf-part2 %})
 
 Again (for the last time I promise), if any terms seem confusing to you, check out the glossary: [Jump to Glossary →](#appendix--quick-glossary-plain-english)
 
