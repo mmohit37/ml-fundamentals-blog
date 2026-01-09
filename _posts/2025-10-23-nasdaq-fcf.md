@@ -14,7 +14,7 @@ Here, we start simple, testing whether companies that generate positive cash flo
 You’ll see how we define FCF, build a lag-safe dataset, and compare average future returns between the two groups.  
 The goal is to find out: *does financial health, measured through FCF, really show up in next year’s performance?*
 
-[Next → [Part 2 — Quartile & Sector-Neutral Analysis]({% post_url 2025-10-31-nasdaq-fcf-part2 %})
+[Next → [Part 2 — Quartile & Sector-Neutral Analysis]({{ site.baseurl }}{% post_url 2025-10-31-nasdaq-fcf-part2 %})
 
 
 ## 1) Intro & Goal
