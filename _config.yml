@@ -7,3 +7,5 @@ future: true
 
 url: "https://mmohit37.github.io"
 baseurl: "/ml-fundamentals-blog"
+
+permalink: /:year/:month/:day/:title:output_ext
